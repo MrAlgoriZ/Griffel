@@ -6,6 +6,6 @@ ENV = load_dotenv()
 
 @dataclass
 class Env:
-    IS_LOADED=ENV
-    TELEGRAM=getenv("TELEGRAM_TOKEN")
-    OPEN_ROUTER=getenv("OPEN_ROUTER_TOKEN")
+    IS_LOADED: bool = ENV
+    TELEGRAM = getenv("TELEGRAM_TOKEN")
+    OPEN_ROUTER = getenv("OPEN_ROUTER_TOKEN")
