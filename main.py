@@ -1,5 +1,7 @@
+from src.utils.env import Env
+
 def main():
-    print("Hello from declist-bot!")
+    ...
 
 
 if __name__ == "__main__":
