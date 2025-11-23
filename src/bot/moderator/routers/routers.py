@@ -4,7 +4,6 @@ from aiogram import Bot, Router, types, F
 from aiogram.filters import Command, CommandObject
 from aiogram.exceptions import TelegramBadRequest
 from contextlib import suppress
-from datetime import date
 
 md_router = Router()
 md_router.message.filter(F.chat.type != "private") # Commands could use in groups

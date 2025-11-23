@@ -9,5 +9,12 @@ def load_config(path: Path = Path("config/config.json")) -> dict:
         return json.load(file)
 
 @dataclass
+class ConfigSystemPrompts:
+    AGRESSIVE_PROMPT=load_config().get("system_prompts").get("AGRESSIVE_PROMPT")
+    PETER_PROMPT=load_config().get("system_prompts").get("PETER_PROMPT")
+    SMART_PROMPT=load_config().get("system_prompts").get("SMART_PROMPT")
+    MODERATOR_PROMPT=load_config().get("system_prompts").get("MODERATOR_PROMPT")
+
+@dataclass
 class Config:
-    DEFAULT_PROMPT=load_config().get("DEFAULT_PROMPT")
+    SYSTEM_PROMPTS=ConfigSystemPrompts
