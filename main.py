@@ -3,12 +3,14 @@ from aiogram import Dispatcher
 
 import src.bot
 
-from src.bot.moderator.routers.routers import md_router
-from src.bot.ai.routers.routers import ai_router
+from src.bot.moderator.routers import md_router
+from src.bot.ai.routers import ai_router
+from src.bot.base.routers import base_router
 
 async def main():
     dp = Dispatcher()
     
+    dp.include_router(base_router)
     dp.include_router(md_router)
     dp.include_router(ai_router)
     
