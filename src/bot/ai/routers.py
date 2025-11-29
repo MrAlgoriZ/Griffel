@@ -14,6 +14,6 @@ async def func_handle_request(message: types.Message):
         return 
     msg = await message.answer("печатает...")
     parsed_msg = parse_msg(message)
-    response = await asyncio.to_thread(DefaultModels.PETER.make_request, parsed_msg)
+    response = await asyncio.to_thread(DefaultModels.AGRESSIVE.make_request, parsed_msg)
     await msg.delete()
     await message.reply(response)

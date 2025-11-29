@@ -16,5 +16,11 @@ class ConfigSystemPrompts:
     MODERATOR_PROMPT=load_config().get("system_prompts").get("MODERATOR_PROMPT")
 
 @dataclass
+class ConfigBasePhrases:
+    START=load_config().get("base_phrases").get("start")
+    HELP=load_config().get("base_phrases").get("help")
+
+@dataclass
 class Config:
     SYSTEM_PROMPTS=ConfigSystemPrompts
+    BASE_PHRASES=ConfigBasePhrases
