@@ -14,6 +14,7 @@ class ConfigSystemPrompts:
     PETER_PROMPT=load_config().get("system_prompts").get("PETER_PROMPT")
     SMART_PROMPT=load_config().get("system_prompts").get("SMART_PROMPT")
     MODERATOR_PROMPT=load_config().get("system_prompts").get("MODERATOR_PROMPT")
+    KAWAII_PROMPT=load_config().get("system_prompts").get("KAWAII_PROMPT")
 
 @dataclass
 class ConfigBasePhrases:

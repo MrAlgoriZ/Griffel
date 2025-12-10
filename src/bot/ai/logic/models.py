@@ -62,3 +62,7 @@ class DefaultModels:
         role="assistant"
         # TODO Добавить характеристики модели-модератора
     )
+    KAWAII = Model(
+        system_prompt=Config.SYSTEM_PROMPTS.KAWAII_PROMPT,
+        # TODO Добавить характеристики
+    )
