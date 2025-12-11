@@ -6,8 +6,8 @@ from dataclasses import dataclass
 class Model:
     def __init__(
             self, system_prompt: str, role: str = "user",
-            temperature: float = 0.7, top_p: float = 0.95,
-            presence_penalty: float = 0.0, frequency_penalty: float = 0.0
+            temperature: float = 0.55, top_p: float = 0.8,
+            presence_penalty: float = 0.25, frequency_penalty: float = 0.4
         ):
         self.system_prompt = system_prompt
         self.role = role
@@ -45,6 +45,10 @@ class Model:
 class DefaultModels:
     AGRESSIVE = Model(
         system_prompt=Config.SYSTEM_PROMPTS.AGRESSIVE_PROMPT,
+        temperature=0.7,
+        top_p=0.9,
+        presence_penalty=0.25,
+        frequency_penalty=0.4
     )
     PETER = Model(
         system_prompt=Config.SYSTEM_PROMPTS.PETER_PROMPT,
@@ -55,14 +59,24 @@ class DefaultModels:
     )
     SMART = Model(
         system_prompt=Config.SYSTEM_PROMPTS.SMART_PROMPT,
-        # TODO Добавить характеристики умной модели
+        temperature=0.3,
+        top_p=0.85,
+        presence_penalty=0.1,
+        frequency_penalty=0.1
     )
     MODERATOR = Model(
         system_prompt=Config.SYSTEM_PROMPTS.MODERATOR_PROMPT,
-        role="assistant"
-        # TODO Добавить характеристики модели-модератора
+        role="assistant",
+        temperature=0.3,
+        top_p=0.85,
+        presence_penalty=0.1,
+        frequency_penalty=0.1
     )
     KAWAII = Model(
         system_prompt=Config.SYSTEM_PROMPTS.KAWAII_PROMPT,
-        # TODO Добавить характеристики
+        temperature=0.65,
+        top_p=0.92,
+        presence_penalty=0.3,
+        frequency_penalty=0.5
     )
+
