@@ -5,8 +5,9 @@ from contextlib import suppress
 import src.bot
 
 from src.bot.moderator.routers import md_router
-from src.bot.ai.routers import ai_router, HistoryMiddleware
+from src.bot.ai.routers import ai_router
 from src.bot.base.routers import base_router
+from src.bot.core.middlewares.ai_middleware import HistoryMiddleware
 
 async def main():
     dp = Dispatcher()

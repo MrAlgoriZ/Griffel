@@ -38,13 +38,20 @@ def parse_time(time: str | None):
         value = int(re_match.group(1))
         unit = re_match.group(2)
 
-        if unit in minutes: time_delta = timedelta(minutes=value)
-        elif unit in hours: time_delta = timedelta(hours=value)
-        elif unit in days: time_delta = timedelta(days=value)
-        elif unit in weeks: time_delta = timedelta(weeks=value)
-        elif unit in months: time_delta = timedelta(days=value * 31)
-        elif unit in years: time_delta = timedelta(days=value * 365)
-        else: return None
+        if unit in minutes: 
+            time_delta = timedelta(minutes=value)
+        elif unit in hours: 
+            time_delta = timedelta(hours=value)
+        elif unit in days: 
+            time_delta = timedelta(days=value)
+        elif unit in weeks: 
+            time_delta = timedelta(weeks=value)
+        elif unit in months: 
+            time_delta = timedelta(days=value * 31)
+        elif unit in years: 
+            time_delta = timedelta(days=value * 365)
+        else: 
+            return None    
     else:
         return None
     
