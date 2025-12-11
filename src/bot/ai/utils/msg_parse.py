@@ -14,7 +14,7 @@ class MessageParser:
         
         if message.reply_to_message is not None:
             replied_msg = one_message_parse(message.reply_to_message)
-            result = f"{replied_msg}; ответ: {current_msg}"
+            result = f"{current_msg}->{replied_msg}"
         else:
             result = current_msg
         
