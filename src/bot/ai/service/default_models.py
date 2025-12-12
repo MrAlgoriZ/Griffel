@@ -30,7 +30,7 @@ class Model:
             messages=[
                 {
                     "role": self.role,
-                    "content": f"{self.system_prompt} {msg}."
+                    "content": f"{self.system_prompt} {msg}"
                 }
             ],
             temperature=self.temperature,
@@ -64,14 +64,7 @@ class DefaultModels:
         presence_penalty=0.1,
         frequency_penalty=0.1
     )
-    MODERATOR = Model(
-        system_prompt=Config.SYSTEM_PROMPTS.MODERATOR_PROMPT,
-        role="assistant",
-        temperature=0.3,
-        top_p=0.85,
-        presence_penalty=0.1,
-        frequency_penalty=0.1
-    )
+
     KAWAII = Model(
         system_prompt=Config.SYSTEM_PROMPTS.KAWAII_PROMPT,
         temperature=0.65,
@@ -80,3 +73,11 @@ class DefaultModels:
         frequency_penalty=0.5
     )
 
+    MODERATOR = Model(
+        system_prompt=Config.SYSTEM_PROMPTS.MODERATOR_PROMPT,
+        role="assistant",
+        temperature=0.3,
+        top_p=0.85,
+        presence_penalty=0.1,
+        frequency_penalty=0.1
+    )

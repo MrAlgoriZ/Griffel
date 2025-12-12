@@ -1,6 +1,7 @@
 from aiogram.enums.chat_member_status import ChatMemberStatus
 import re
 from datetime import datetime, timedelta
+from typing import Optional
 
 async def is_admin(message, bot):
     member = await bot.get_chat_member(message.chat.id, message.from_user.id)
@@ -9,51 +10,61 @@ async def is_admin(message, bot):
         return False
     return True
 
-def parse_time(time: str | None):
+_TIME_UNITS = {
+    "minutes": ["минута", "минуту", "минут", "мин", "м", "minutes", "minute", "min", "m"],
+    "hours": ["часов", "часа", "час", "ч", "hours", "hour", "h"],
+    "days": ["дней", "день", "дня", "д", "days", "day", "d"],
+    "weeks": ["неделя", "недели", "недель", "нед", "н", "weeks", "week", "w"],
+    "months": ["месяц", "месяца", "месяцев", "мес", "months", "month", "mon"],
+    "years": ["лет", "года", "год", "г", "years", "year", "y"],
+}
+
+_TIMEDELTA_KWARGS = {
+    "minutes": lambda v: {"minutes": v},
+    "hours": lambda v: {"hours": v},
+    "days": lambda v: {"days": v},
+    "weeks": lambda v: {"weeks": v},
+    "months": lambda v: {"days": v * 31},
+    "years": lambda v: {"days": v * 365},
+}
+
+def parse_time(time: Optional[str]) -> Optional[datetime]:
+    """
+    Parse a time string and return a datetime object representing the future time.
+
+    Supports various time units: minutes, hours, days, weeks, months, years.
+    Accepts both English and Russian language units.
+
+    Args:
+        time: A time string like "5m", "2h", "1d", etc. Can be None.
+
+    Returns:
+        datetime: A datetime object in the future, or None if parsing fails
+    """
     if not time:
         return None
-    
-    re_match = re.match(r"(\d+)([a-z])", time.lower().strip())
-    now_datetime = datetime.now()
 
-    minutes = ["минута", "минуту", "минут", "мин", "м", 
-               "minutes", "minute", "min", "m"]
-    
-    hours = ["часов", "часа", "час", "ч"
-             "hours", "hour" "h"]
-    
-    days = ["дней", "день", "дня", "д", 
-            "days", "day", "d"]
-    
-    weeks = ["неделя", "недели", "недель", "нед", "н",
-             "weeks", "week", "w"]
-    
-    months = ["месяц", "месяца", "месяцев", "мес", 
-              "months", "month", "mon"]
-    
-    years = ["лет", "года", "год", "г",
-             "years", "year", "y"]
-
-    if re_match:
-        value = int(re_match.group(1))
-        unit = re_match.group(2)
-
-        if unit in minutes: 
-            time_delta = timedelta(minutes=value)
-        elif unit in hours: 
-            time_delta = timedelta(hours=value)
-        elif unit in days: 
-            time_delta = timedelta(days=value)
-        elif unit in weeks: 
-            time_delta = timedelta(weeks=value)
-        elif unit in months: 
-            time_delta = timedelta(days=value * 31)
-        elif unit in years: 
-            time_delta = timedelta(days=value * 365)
-        else: 
-            return None    
-    else:
+    # Parse time pattern: number + unit (e.g., "5m", "2часа")
+    time_match = re.match(r"(\d+)([a-z])", time.lower().strip())
+    if not time_match:
         return None
-    
-    new_datetime = now_datetime + time_delta
-    return new_datetime
+
+    value = int(time_match.group(1))
+    unit = time_match.group(2)
+
+    # Find matching time unit category
+    time_unit_category = None
+    for category, units in _TIME_UNITS.items():
+        if unit in units:
+            time_unit_category = category
+            break
+
+    if time_unit_category is None:
+        return None
+
+    # Create timedelta and calculate future datetime
+    timedelta_kwargs = _TIMEDELTA_KWARGS[time_unit_category](value)
+    time_delta = timedelta(**timedelta_kwargs)
+    future_datetime = datetime.now() + time_delta
+
+    return future_datetime

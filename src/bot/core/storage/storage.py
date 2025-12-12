@@ -20,10 +20,24 @@ class RamMessageStorage(MessageStorage):
         self.storage = {}
         self.lock = asyncio.Lock()
 
+    async def ensure_chat(self, chat_id: int, maxlen: int = 10):
+        """Ensure a deque exists for chat_id with the requested maxlen.
+
+        If the deque exists but has a different maxlen, it will be recreated preserving items.
+        """
+        async with self.lock:
+            if chat_id not in self.storage:
+                self.storage[chat_id] = deque(maxlen=maxlen)
+                return
+            dq = self.storage[chat_id]
+            if getattr(dq, "maxlen", None) != maxlen:
+                items = list(dq)
+                self.storage[chat_id] = deque(items, maxlen=maxlen)
+
     async def add(self, message):
         async with self.lock: # Блокировка состояния, чтобы избежать "гонки"
             if message.chat.id not in self.storage:
-                self.storage[message.chat.id] = deque(maxlen=10) # TODO добавить кастомный maxlen
+                self.storage[message.chat.id] = deque(maxlen=10) # default, can be adjusted by ensure_chat
             self.storage[message.chat.id].append(MessageParser.parse(message))
 
     async def add_raw(self, text: str, chat_id: int, bot: Bot):
@@ -35,4 +49,4 @@ class RamMessageStorage(MessageStorage):
 
 message_storage = RamMessageStorage() # Создание глобального объекта, для использования в других файлах
 
-# TODO добавить хранилище с помощью postgresql
+# TODO добавить хранилище с помощью postgresql (сейчас делать не нужно)
