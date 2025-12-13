@@ -27,7 +27,7 @@ class Model:
         msg: str,
         api_key: str = Env.OPEN_ROUTER,
         model: str = "x-ai/grok-4.1-fast",
-    ) -> str:
+    ) -> str | None:
         client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key)
         completion = client.chat.completions.create(
             model=model,

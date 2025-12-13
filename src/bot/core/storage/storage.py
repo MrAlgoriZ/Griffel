@@ -5,6 +5,10 @@ from aiogram.types import Message
 import asyncio
 
 from src.bot.ai.utils.msg_parse import MessageParser
+from src.logging.logging import get_debug_logger
+
+
+debug = get_debug_logger().debug
 
 
 class MessageStorage(ABC):
@@ -25,11 +29,17 @@ class RamMessageStorage(MessageStorage):
         async with self.lock:
             if chat_id not in self.storage:
                 self.storage[chat_id] = deque(maxlen=maxlen)
+                debug(
+                    f"Initialized message storage for chat {chat_id} with maxlen {maxlen}"
+                )
                 return
             dq = self.storage[chat_id]
             if getattr(dq, "maxlen", None) != maxlen:
                 items = list(dq)
                 self.storage[chat_id] = deque(items, maxlen=maxlen)
+                debug(
+                    f"Updated message storage for chat {chat_id} to new maxlen {maxlen}"
+                )
 
     async def add(self, message):
         async with self.lock:  # Блокировка состояния, чтобы избежать "гонки"

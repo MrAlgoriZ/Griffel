@@ -1,11 +1,13 @@
 from aiogram import Router, types, F, Bot
 from aiogram.filters import Command
+
 from src.utils.config import Config
 from src.utils.env import Env
 from src.bot.functions import is_admin
 from src.database.db_req import Table
 from src.bot.ai.service.default_models import DefaultModels
 from src.bot.base import keyboards
+from src.bot.core.storage.storage import message_storage
 
 base_router = Router()
 
@@ -84,7 +86,7 @@ async def callback_config(cb: types.CallbackQuery, bot: Bot):
         if param == "custom":
             pending_actions[chat_id] = {"action": "set_history"}
             await cb.message.answer(
-                "Отправьте желаемую длину контекста (число). Максимум 10 без Premium, 25 с Premium."
+                "Введите желаемую длину контекста (число). Максимум 10 без Premium, 25 с Premium. Отправьте 'skip', чтобы отказаться."
             )
             await cb.answer()
             return
@@ -113,7 +115,7 @@ async def callback_config(cb: types.CallbackQuery, bot: Bot):
             return
         pending_actions[chat_id] = {"action": "set_prompt"}
         await cb.message.answer(
-            "Отправьте новый промпт в чат (поменяет режим бота на 'CUSTOM')."
+            "Введите новый промпт в чат (поменяет режим бота на 'CUSTOM'). Отправьте 'skip', чтобы отказаться."
         )
         await cb.answer()
         return
@@ -140,7 +142,9 @@ async def callback_config(cb: types.CallbackQuery, bot: Bot):
 
     if action == "botname":
         pending_actions[chat_id] = {"action": "set_botname"}
-        await cb.message.answer("Отправьте новое имя бота (макс. 15 символов).")
+        await cb.message.answer(
+            "Отправьте новое имя бота (макс. 15 символов). Отправьте 'skip', чтобы отказаться."
+        )
         await cb.answer()
         return
 
@@ -173,26 +177,36 @@ async def pending_action_receiver(message: types.Message, bot: Bot):
         await message.reply("Только администраторы чата могут выполнить это действие")
         return
 
+    if message.text.strip().lower() == "skip":
+        await message.reply("Действие отменено.")
+        return
+
     if action == "set_history":
         try:
             value = int(message.text.strip())
         except Exception:
-            await message.reply("Пожалуйста, введите положительное целое число.")
+            pending_actions[chat_id] = action_info
+            await message.reply(
+                "Пожалуйста, введите положительное целое число, и попробуйте снова."
+            )
             return
         max_allowed = 25 if cfg.get("is_premium") else 10
         if value > max_allowed:
+            pending_actions[chat_id] = action_info
             await message.reply(
-                f"Значение слишком больше, максимальное: {max_allowed} сообщений"
+                f"Значение слишком больше, максимальное: {max_allowed} сообщений. Попробуйте снова"
             )
             return
         await table.update({"id": chat_id}, {"history_maxlen": value})
+        await message_storage.ensure_chat(chat_id, maxlen=value)
         await message.reply(f"Длина контекста изменена на: {value} сообщений")
         return
 
     if action == "set_prompt":
         new_prompt = message.text.strip()
         if not new_prompt:
-            await message.reply("Prompt cannot be empty.")
+            pending_actions[chat_id] = action_info
+            await message.reply("Промпт не может быть пустым. Попробуйте снова")
             return
         await table.update(
             {"id": chat_id}, {"prompt": new_prompt, "bot_mode": "CUSTOM"}
@@ -203,18 +217,19 @@ async def pending_action_receiver(message: types.Message, bot: Bot):
     if action == "set_botname":
         name = message.text.strip()
         if len(name) > 15:
-            await message.reply("Имя слишком большое, максимум 15 символов.")
+            pending_actions[chat_id] = action_info
+            await message.reply(
+                "Имя слишком большое, максимум 15 символов. Попробуйте снова"
+            )
             return
         await table.update({"id": chat_id}, {"bot_name": name})
         await message.reply(f"Имя бота изменено на '{name}'.")
         return
 
     if action == "set_openrouter":
-        if message.text.strip().lower() == "skip":
-            await message.reply("Ключ OpenRouter не установлен.")
-            return
         key = message.text.strip()
         if len(key) < 10:
+            pending_actions[chat_id] = action_info
             await message.reply(
                 "Предоставленный ключ выглядит слишком коротким; пожалуйста, перепроверьте и отправьте заново."
             )
