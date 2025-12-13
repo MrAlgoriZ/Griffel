@@ -48,5 +48,3 @@ class RamMessageStorage(MessageStorage):
             self.storage[chat_id].append(f"{bot_name}: {text};")
 
 message_storage = RamMessageStorage() # Создание глобального объекта, для использования в других файлах
-
-# TODO добавить хранилище с помощью postgresql (сейчас делать не нужно)

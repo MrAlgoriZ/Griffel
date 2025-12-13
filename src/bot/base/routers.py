@@ -47,7 +47,7 @@ async def func_config(message: types.Message, bot: Bot):
         })
 
     text = keyboards.build_config_text(cfg)
-    kb = keyboards.build_config_keyboard(cfg)
+    kb = keyboards.build_config_keyboard()
     await message.reply(text, reply_markup=kb)
 
 

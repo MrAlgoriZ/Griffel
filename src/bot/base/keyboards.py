@@ -5,8 +5,8 @@ from src.bot.ai.service.default_models import DefaultModels
 def build_config_text(cfg: dict) -> str:
 	"""Return a human-friendly text representation of the chat config."""
 	lines = []
-	lines.append(f"Макс. длина контекста: {cfg.get('history_maxlen')} сообщений")
-	lines.append(f"Premium: {'Yes' if cfg.get('is_premium') else 'No'}")
+	lines.append(f"Макс. длина контекста: {cfg.get('history_maxlen')} (соо.)")
+	lines.append(f"Premium: {'Есть' if cfg.get('is_premium') else 'Нет'}")
 	lines.append(f"Имя бота: {cfg.get('bot_name') or 'Гриффель'}")
 	lines.append(f"Режим бота: {cfg.get('bot_mode') or '(не установлен)'}")
 	lines.append(f"Правила чата: {"(установлены)" if cfg.get('chat_rules') else '(не установлены)'}")
@@ -14,7 +14,7 @@ def build_config_text(cfg: dict) -> str:
 	return "\n".join(lines)
 
 
-def build_config_keyboard(cfg: dict) -> InlineKeyboardMarkup:
+def build_config_keyboard(cfg: dict = {}) -> InlineKeyboardMarkup:
 	"""Build an InlineKeyboardMarkup for chat configuration actions.
 
 	Buttons use callback data prefixed with 'cfg:'.

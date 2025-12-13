@@ -51,6 +51,7 @@ async def func_handle_request(message: Message, bot: Bot, command: CommandObject
     parsed_messages = (
         f"\nКонтекст: \n{history_block}\nТекущий вопрос: {current_question}\nТвой ответ:"
     )
+    print(parsed_messages)
     # Call model with only the message argument
     response = await asyncio.to_thread(model_obj.make_request, parsed_messages)
     await msg.delete()
