@@ -8,9 +8,13 @@ from src.bot.moderator.routers import md_router
 from src.bot.ai.routers import ai_router
 from src.bot.base.routers import base_router
 from src.bot.core.middlewares.ai_middleware import HistoryMiddleware
+from src.logging.logging import init_aiogram_logging, get_debug_logger
+
+init_aiogram_logging("logs/bot.txt")
 
 
 async def main():
+    debug = get_debug_logger().debug
     dp = Dispatcher()
 
     dp.include_router(ai_router)
@@ -19,6 +23,8 @@ async def main():
 
     dp.message.middleware(HistoryMiddleware())
 
+    print("Bot started")
+    debug("Bot started")
     await dp.start_polling(src.bot.bot)
 
 
