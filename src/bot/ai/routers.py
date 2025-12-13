@@ -10,6 +10,7 @@ import asyncio
 
 ai_router = Router()
 
+
 @ai_router.message(Command("ask"))
 async def func_handle_request(message: Message, bot: Bot, command: CommandObject):
     chat_id = message.chat.id
@@ -32,16 +33,14 @@ async def func_handle_request(message: Message, bot: Bot, command: CommandObject
 
     msg = await message.answer("печатает...")
     storage = list(message_storage.storage.get(chat_id, []))
-    
+
     if getattr(command, "args", None):
         current_question = command.args.strip()
     else:
         current_question = MessageParser.parse(message)
 
     history_block = "\n".join(storage) if storage else ""
-    parsed_messages = (
-        f"\nКонтекст: \n{history_block}\nТекущий вопрос: {current_question}\nТвой ответ:"
-    )
+    parsed_messages = f"\nКонтекст: \n{history_block}\nТекущий вопрос: {current_question}\nТвой ответ:"
     print(parsed_messages)
     response = await asyncio.to_thread(model_obj.make_request, parsed_messages)
     await msg.delete()

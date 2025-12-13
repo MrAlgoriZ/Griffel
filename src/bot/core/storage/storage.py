@@ -6,10 +6,11 @@ import asyncio
 
 from src.bot.ai.utils.msg_parse import MessageParser
 
+
 class MessageStorage(ABC):
     def __init__(self):
         self.storage
-    
+
     @abstractmethod
     def add(self, message: Message | str):
         raise NotImplementedError
@@ -31,7 +32,7 @@ class RamMessageStorage(MessageStorage):
                 self.storage[chat_id] = deque(items, maxlen=maxlen)
 
     async def add(self, message):
-        async with self.lock: # Блокировка состояния, чтобы избежать "гонки"
+        async with self.lock:  # Блокировка состояния, чтобы избежать "гонки"
             if message.chat.id not in self.storage:
                 self.storage[message.chat.id] = deque(maxlen=10)
             self.storage[message.chat.id].append(MessageParser.parse(message))
@@ -43,4 +44,7 @@ class RamMessageStorage(MessageStorage):
             bot_name = await bot.get_my_name()
             self.storage[chat_id].append(f"{bot_name}: {text};")
 
-message_storage = RamMessageStorage() # Создание глобального объекта, для использования в других файлах
+
+message_storage = (
+    RamMessageStorage()
+)  # Создание глобального объекта, для использования в других файлах

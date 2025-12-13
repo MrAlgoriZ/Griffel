@@ -25,7 +25,9 @@ async def func_help(message: types.Message):
 @base_router.message(Command("config"))
 async def func_config(message: types.Message, bot: Bot):
     if not await is_admin(message, bot):
-        await message.reply("Только администраторы чата могут смотреть и изменять конфигурацию.")
+        await message.reply(
+            "Только администраторы чата могут смотреть и изменять конфигурацию."
+        )
         return
 
     table = Table(Env.DATABASE.table)
@@ -34,16 +36,18 @@ async def func_config(message: types.Message, bot: Bot):
     cfg = await table.select_one({"id": chat_id})
     default_prompt = DefaultModels.SMART.system_prompt
     if not cfg:
-        cfg = await table.insert({
-            "id": chat_id,
-            "prompt": default_prompt,
-            "history_maxlen": 10,
-            "is_premium": False,
-            "bot_name": "",
-            "bot_mode": "SMART",
-            "chat_rules": "",
-            "openrouter_key": "",
-        })
+        cfg = await table.insert(
+            {
+                "id": chat_id,
+                "prompt": default_prompt,
+                "history_maxlen": 10,
+                "is_premium": False,
+                "bot_name": "",
+                "bot_mode": "SMART",
+                "chat_rules": "",
+                "openrouter_key": "",
+            }
+        )
 
     text = keyboards.build_config_text(cfg)
     kb = keyboards.build_config_keyboard()
@@ -60,12 +64,17 @@ async def callback_config(cb: types.CallbackQuery, bot: Bot):
     table = Table(Env.DATABASE.table)
     cfg = await table.select_one({"id": chat_id})
     if not cfg:
-        await cb.answer("Конфигурация не найдена. Введите /config, чтобы инициализировать.")
+        await cb.answer(
+            "Конфигурация не найдена. Введите /config, чтобы инициализировать."
+        )
         return
 
     fake_message = types.Message(
-        message_id=0, date=cb.message.date, chat=cb.message.chat,
-        text="", from_user=cb.from_user
+        message_id=0,
+        date=cb.message.date,
+        chat=cb.message.chat,
+        text="",
+        from_user=cb.from_user,
     )
     if not await is_admin(fake_message, bot):
         await cb.answer("Только администраторы чата могут выполнить это действие")
@@ -74,7 +83,9 @@ async def callback_config(cb: types.CallbackQuery, bot: Bot):
     if action == "history":
         if param == "custom":
             pending_actions[chat_id] = {"action": "set_history"}
-            await cb.message.answer("Отправьте желаемую длину контекста (число). Максимум 10 без Premium, 25 с Premium.")
+            await cb.message.answer(
+                "Отправьте желаемую длину контекста (число). Максимум 10 без Premium, 25 с Premium."
+            )
             await cb.answer()
             return
 
@@ -86,7 +97,9 @@ async def callback_config(cb: types.CallbackQuery, bot: Bot):
 
         max_allowed = 25 if cfg.get("is_premium") else 10
         if value > max_allowed:
-            await cb.answer(f"Этот чат не имеет премиума, максимальное разрешенное значение: {max_allowed} сообщений.")
+            await cb.answer(
+                f"Этот чат не имеет премиума, максимальное разрешенное значение: {max_allowed} сообщений."
+            )
             return
 
         await table.update({"id": chat_id}, {"history_maxlen": value})
@@ -99,7 +112,9 @@ async def callback_config(cb: types.CallbackQuery, bot: Bot):
             await cb.answer("Изменение промпта доступно только для Premium чатов")
             return
         pending_actions[chat_id] = {"action": "set_prompt"}
-        await cb.message.answer("Отправьте новый промпт в чат (поменяет режим бота на 'CUSTOM').")
+        await cb.message.answer(
+            "Отправьте новый промпт в чат (поменяет режим бота на 'CUSTOM')."
+        )
         await cb.answer()
         return
 
@@ -113,7 +128,9 @@ async def callback_config(cb: types.CallbackQuery, bot: Bot):
             default_prompt = DefaultModels.SMART.system_prompt
             current_prompt = cfg.get("prompt") or ""
             if not current_prompt or current_prompt == default_prompt:
-                await cb.answer("Чтобы использовать кастомный режим, вы должны поменять промпт.")
+                await cb.answer(
+                    "Чтобы использовать кастомный режим, вы должны поменять промпт."
+                )
                 return
 
         await table.update({"id": chat_id}, {"bot_mode": model_name})
@@ -129,7 +146,9 @@ async def callback_config(cb: types.CallbackQuery, bot: Bot):
 
     if action == "openrouter":
         pending_actions[chat_id] = {"action": "set_openrouter"}
-        await cb.message.answer("Чтобы предоставить ключ OpenRouter, вставьте его в сообщение. Отправьте 'skip', чтобы отказаться.")
+        await cb.message.answer(
+            "Чтобы предоставить ключ OpenRouter, вставьте его в сообщение. Отправьте 'skip', чтобы отказаться."
+        )
         await cb.answer()
         return
 
@@ -162,7 +181,9 @@ async def pending_action_receiver(message: types.Message, bot: Bot):
             return
         max_allowed = 25 if cfg.get("is_premium") else 10
         if value > max_allowed:
-            await message.reply(f"Значение слишком больше, максимальное: {max_allowed} сообщений")
+            await message.reply(
+                f"Значение слишком больше, максимальное: {max_allowed} сообщений"
+            )
             return
         await table.update({"id": chat_id}, {"history_maxlen": value})
         await message.reply(f"Длина контекста изменена на: {value} сообщений")
@@ -173,7 +194,9 @@ async def pending_action_receiver(message: types.Message, bot: Bot):
         if not new_prompt:
             await message.reply("Prompt cannot be empty.")
             return
-        await table.update({"id": chat_id}, {"prompt": new_prompt, "bot_mode": "CUSTOM"})
+        await table.update(
+            {"id": chat_id}, {"prompt": new_prompt, "bot_mode": "CUSTOM"}
+        )
         await message.reply("Промпт обновлен, и режим бота изменен на 'CUSTOM'")
         return
 
@@ -192,7 +215,9 @@ async def pending_action_receiver(message: types.Message, bot: Bot):
             return
         key = message.text.strip()
         if len(key) < 10:
-            await message.reply("Предоставленный ключ выглядит слишком коротким; пожалуйста, перепроверьте и отправьте заново.")
+            await message.reply(
+                "Предоставленный ключ выглядит слишком коротким; пожалуйста, перепроверьте и отправьте заново."
+            )
             return
         await table.update({"id": chat_id}, {"openrouter_key": key})
         await message.reply("Ключ OpenRouter сохранен.")

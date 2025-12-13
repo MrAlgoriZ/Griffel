@@ -3,15 +3,30 @@ import re
 from datetime import datetime, timedelta
 from typing import Optional
 
+
 async def is_admin(message, bot):
     member = await bot.get_chat_member(message.chat.id, message.from_user.id)
     bot = await bot.get_chat_member(message.chat.id, bot.id)
-    if member.status not in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.CREATOR] or bot.status != ChatMemberStatus.ADMINISTRATOR:
+    if (
+        member.status not in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.CREATOR]
+        or bot.status != ChatMemberStatus.ADMINISTRATOR
+    ):
         return False
     return True
 
+
 _TIME_UNITS = {
-    "minutes": ["минута", "минуту", "минут", "мин", "м", "minutes", "minute", "min", "m"],
+    "minutes": [
+        "минута",
+        "минуту",
+        "минут",
+        "мин",
+        "м",
+        "minutes",
+        "minute",
+        "min",
+        "m",
+    ],
     "hours": ["часов", "часа", "час", "ч", "hours", "hour", "h"],
     "days": ["дней", "день", "дня", "д", "days", "day", "d"],
     "weeks": ["неделя", "недели", "недель", "нед", "н", "weeks", "week", "w"],
@@ -27,6 +42,7 @@ _TIMEDELTA_KWARGS = {
     "months": lambda v: {"days": v * 31},
     "years": lambda v: {"days": v * 365},
 }
+
 
 def parse_time(time: Optional[str]) -> Optional[datetime]:
     if not time:

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 ENV = load_dotenv()
 
+
 @dataclass
 class DatabaseEnv:
     user = getenv("DATABASE_USER")
@@ -11,6 +12,7 @@ class DatabaseEnv:
     database = getenv("DATABASE_NAME")
     host = getenv("DATABASE_HOST")
     table = getenv("TABLE_NAME")
+
 
 @dataclass
 class Env:

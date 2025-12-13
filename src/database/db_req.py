@@ -1,6 +1,6 @@
 import asyncpg
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 from src.utils.env import Env
 
 
@@ -20,12 +20,14 @@ class Database:
 
     async def create_conn(self):
         return await asyncpg.connect(
-            user=self.user, password=self.password,
-            database=self.database, host=self.host
+            user=self.user,
+            password=self.password,
+            database=self.database,
+            host=self.host,
         )
 
 
-class BaseTable(ABC): 
+class BaseTable(ABC):
     @abstractmethod
     async def insert(self, data: Dict[str, Any]) -> Any:
         pass
@@ -39,7 +41,9 @@ class BaseTable(ABC):
         pass
 
     @abstractmethod
-    async def select(self, conditions: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    async def select(
+        self, conditions: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
         pass
 
     @abstractmethod
@@ -68,7 +72,9 @@ class Table(BaseTable):
         finally:
             await conn.close()
 
-    def _build_where_clause(self, conditions: Dict[str, Any], start_index: int = 1) -> Tuple[str, List[Any]]:
+    def _build_where_clause(
+        self, conditions: Dict[str, Any], start_index: int = 1
+    ) -> Tuple[str, List[Any]]:
         if not conditions:
             return "", []
 
@@ -80,7 +86,9 @@ class Table(BaseTable):
 
         return " WHERE " + " AND ".join(clauses), values
 
-    def _build_set_clause(self, data: Dict[str, Any], start_index: int = 1) -> Tuple[str, List[Any]]:
+    def _build_set_clause(
+        self, data: Dict[str, Any], start_index: int = 1
+    ) -> Tuple[str, List[Any]]:
         clauses = []
         values = []
         for key, value in data.items():
@@ -95,7 +103,9 @@ class Table(BaseTable):
 
         columns = ", ".join(data.keys())
         placeholders = ", ".join(f"${i}" for i in range(1, len(data) + 1))
-        query = f"INSERT INTO {self.name} ({columns}) VALUES ({placeholders}) RETURNING *"
+        query = (
+            f"INSERT INTO {self.name} ({columns}) VALUES ({placeholders}) RETURNING *"
+        )
 
         result = await self._execute_query(query, *data.values())
         return result[0] if result else None
@@ -113,14 +123,17 @@ class Table(BaseTable):
                 mode_name = str(data_to_update.get("bot_mode") or "").upper()
                 if mode_name and mode_name != "CUSTOM":
                     from src.bot.ai.service.default_models import DefaultModels
+
                     model_obj = getattr(DefaultModels, mode_name, None)
                     if model_obj and hasattr(model_obj, "system_prompt"):
                         data_to_update["prompt"] = model_obj.system_prompt
             except Exception:
-               pass
+                pass
 
         set_clause, set_values = self._build_set_clause(data_to_update)
-        where_clause, where_values = self._build_where_clause(conditions, start_index=len(set_values) + 1)
+        where_clause, where_values = self._build_where_clause(
+            conditions, start_index=len(set_values) + 1
+        )
 
         all_values = set_values + where_values
         query = f"UPDATE {self.name} SET {set_clause}{where_clause}"
@@ -138,8 +151,12 @@ class Table(BaseTable):
         result = await self._execute_update(query, *values)
         return int(result.split()[-1]) if result else 0
 
-    async def select(self, conditions: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
-        where_clause, values = self._build_where_clause(conditions) if conditions else ("", [])
+    async def select(
+        self, conditions: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
+        where_clause, values = (
+            self._build_where_clause(conditions) if conditions else ("", [])
+        )
         query = f"SELECT * FROM {self.name}{where_clause}"
 
         result = await self._execute_query(query, *values)
@@ -152,7 +169,9 @@ class Table(BaseTable):
         result = await self.select(conditions)
         return result[0] if result else None
 
-    async def select_by_id(self, id_column: str, id_value: Any) -> Optional[Dict[str, Any]]:
+    async def select_by_id(
+        self, id_column: str, id_value: Any
+    ) -> Optional[Dict[str, Any]]:
         return await self.select_one({id_column: id_value})
 
     async def exists(self, conditions: Dict[str, Any]) -> bool:
@@ -160,7 +179,9 @@ class Table(BaseTable):
         return len(result) > 0
 
     async def count(self, conditions: Optional[Dict[str, Any]] = None) -> int:
-        where_clause, values = self._build_where_clause(conditions) if conditions else ("", [])
+        where_clause, values = (
+            self._build_where_clause(conditions) if conditions else ("", [])
+        )
         query = f"SELECT COUNT(*) as count FROM {self.name}{where_clause}"
 
         result = await self._execute_query(query, *values)
