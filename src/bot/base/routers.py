@@ -9,7 +9,6 @@ from src.bot.base import keyboards
 
 base_router = Router()
 
-# In-memory simple state for awaiting admin responses (chat_id -> action dict)
 pending_actions: dict[int, dict] = {}
 
 
@@ -31,7 +30,7 @@ async def func_config(message: types.Message, bot: Bot):
 
     table = Table(Env.DATABASE.table)
     chat_id = message.chat.id
-    # Fetch existing config or create defaults
+
     cfg = await table.select_one({"id": chat_id})
     default_prompt = DefaultModels.SMART.system_prompt
     if not cfg:
@@ -64,7 +63,6 @@ async def callback_config(cb: types.CallbackQuery, bot: Bot):
         await cb.answer("Конфигурация не найдена. Введите /config, чтобы инициализировать.")
         return
 
-    # Only admins can perform config actions
     fake_message = types.Message(
         message_id=0, date=cb.message.date, chat=cb.message.chat,
         text="", from_user=cb.from_user
@@ -73,23 +71,19 @@ async def callback_config(cb: types.CallbackQuery, bot: Bot):
         await cb.answer("Только администраторы чата могут выполнить это действие")
         return
 
-    # Handle actions
     if action == "history":
-        # param may be '1','5','10' or 'custom'
         if param == "custom":
             pending_actions[chat_id] = {"action": "set_history"}
             await cb.message.answer("Отправьте желаемую длину контекста (число). Максимум 10 без Premium, 25 с Premium.")
             await cb.answer()
             return
 
-        # numeric quick set
         try:
             value = int(param)
         except Exception:
             await cb.answer("Неправильное значение")
             return
 
-        # enforce premium limits
         max_allowed = 25 if cfg.get("is_premium") else 10
         if value > max_allowed:
             await cb.answer(f"Этот чат не имеет премиума, максимальное разрешенное значение: {max_allowed} сообщений.")
@@ -110,21 +104,18 @@ async def callback_config(cb: types.CallbackQuery, bot: Bot):
         return
 
     if action == "mode":
-        # param is model name
         model_name = param.upper() if param else ""
         if model_name == "MODERATOR":
             await cb.answer("Модераторский режим нельзя установить через эту панель")
             return
 
         if model_name == "CUSTOM":
-            # allow only if prompt differs from default
             default_prompt = DefaultModels.SMART.system_prompt
             current_prompt = cfg.get("prompt") or ""
             if not current_prompt or current_prompt == default_prompt:
                 await cb.answer("Чтобы использовать кастомный режим, вы должны поменять промпт.")
                 return
 
-        # set mode
         await table.update({"id": chat_id}, {"bot_mode": model_name})
         await cb.message.answer(f"Режим бота изменен на {model_name}.")
         await cb.answer()
@@ -159,7 +150,6 @@ async def pending_action_receiver(message: types.Message, bot: Bot):
     table = Table(Env.DATABASE.table)
     cfg = await table.select_one({"id": chat_id}) or {}
 
-    # Only admins can confirm changes
     if not await is_admin(message, bot):
         await message.reply("Только администраторы чата могут выполнить это действие")
         return
@@ -183,7 +173,6 @@ async def pending_action_receiver(message: types.Message, bot: Bot):
         if not new_prompt:
             await message.reply("Prompt cannot be empty.")
             return
-        # update prompt and set botMode to CUSTOM
         await table.update({"id": chat_id}, {"prompt": new_prompt, "bot_mode": "CUSTOM"})
         await message.reply("Промпт обновлен, и режим бота изменен на 'CUSTOM'")
         return
@@ -202,7 +191,6 @@ async def pending_action_receiver(message: types.Message, bot: Bot):
             await message.reply("Ключ OpenRouter не установлен.")
             return
         key = message.text.strip()
-        # basic length check
         if len(key) < 10:
             await message.reply("Предоставленный ключ выглядит слишком коротким; пожалуйста, перепроверьте и отправьте заново.")
             return
@@ -210,5 +198,4 @@ async def pending_action_receiver(message: types.Message, bot: Bot):
         await message.reply("Ключ OpenRouter сохранен.")
         return
 
-    # fallback
     await message.reply("Действие не распознано или срок действия уже истек.")

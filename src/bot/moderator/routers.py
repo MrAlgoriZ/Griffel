@@ -6,7 +6,7 @@ from aiogram.exceptions import TelegramBadRequest
 from contextlib import suppress
 
 md_router = Router()
-md_router.message.filter(F.chat.type != "private") # Commands could use in groups
+md_router.message.filter(F.chat.type != "private") 
 
 @md_router.message(Command("mute"))
 async def func_mute(message: types.Message, command: CommandObject, bot: Bot):

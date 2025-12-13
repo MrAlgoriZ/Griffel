@@ -21,10 +21,6 @@ class RamMessageStorage(MessageStorage):
         self.lock = asyncio.Lock()
 
     async def ensure_chat(self, chat_id: int, maxlen: int = 10):
-        """Ensure a deque exists for chat_id with the requested maxlen.
-
-        If the deque exists but has a different maxlen, it will be recreated preserving items.
-        """
         async with self.lock:
             if chat_id not in self.storage:
                 self.storage[chat_id] = deque(maxlen=maxlen)
@@ -37,7 +33,7 @@ class RamMessageStorage(MessageStorage):
     async def add(self, message):
         async with self.lock: # Блокировка состояния, чтобы избежать "гонки"
             if message.chat.id not in self.storage:
-                self.storage[message.chat.id] = deque(maxlen=10) # default, can be adjusted by ensure_chat
+                self.storage[message.chat.id] = deque(maxlen=10)
             self.storage[message.chat.id].append(MessageParser.parse(message))
 
     async def add_raw(self, text: str, chat_id: int, bot: Bot):
