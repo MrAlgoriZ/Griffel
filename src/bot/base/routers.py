@@ -14,6 +14,60 @@ base_router = Router()
 pending_actions: dict[int, dict] = {}
 
 
+class PendingActionProcessor:
+    def __init__(self, table: Table, cfg: dict):
+        self.table = table
+        self.cfg = cfg
+
+    async def process(self, action: str, message: types.Message) -> tuple[str, bool]:
+        match action:
+            case "set_history":
+                return await self._process_set_history(message)
+            case "set_prompt":
+                return await self._process_set_prompt(message)
+            case "set_botname":
+                return await self._process_set_botname(message)
+            case "set_openrouter":
+                return await self._process_set_openrouter(message)
+            case _:
+                return "Действие не распознано или срок действия уже истек.", False
+
+    async def _process_set_history(self, message: types.Message) -> tuple[str, bool]:
+        try:
+            value = int(message.text.strip())
+        except Exception:
+            return "Пожалуйста, введите положительное целое число, и попробуйте снова.", True
+        max_allowed = 25 if self.cfg.get("is_premium") else 10
+        if value > max_allowed:
+            return f"Значение слишком больше, максимальное: {max_allowed} сообщений. Попробуйте снова", True
+        await self.table.update({"id": message.chat.id}, {"history_maxlen": value})
+        await message_storage.ensure_chat(message.chat.id, maxlen=value)
+        return f"Длина контекста изменена на: {value} сообщений", False
+
+    async def _process_set_prompt(self, message: types.Message) -> tuple[str, bool]:
+        new_prompt = message.text.strip()
+        if not new_prompt:
+            return "Промпт не может быть пустым. Попробуйте снова", True
+        await self.table.update(
+            {"id": message.chat.id}, {"prompt": new_prompt, "bot_mode": "CUSTOM"}
+        )
+        return "Промпт обновлен, и режим бота изменен на 'CUSTOM'", False
+
+    async def _process_set_botname(self, message: types.Message) -> tuple[str, bool]:
+        name = message.text.strip()
+        if len(name) > 15:
+            return "Имя слишком большое, максимум 15 символов. Попробуйте снова", True
+        await self.table.update({"id": message.chat.id}, {"bot_name": name})
+        return f"Имя бота изменено на '{name}'.", False
+
+    async def _process_set_openrouter(self, message: types.Message) -> tuple[str, bool]:
+        key = message.text.strip()
+        if len(key) < 10:
+            return "Предоставленный ключ выглядит слишком коротким; пожалуйста, перепроверьте и отправьте заново.", True
+        await self.table.update({"id": message.chat.id}, {"openrouter_key": key})
+        return "Ключ OpenRouter сохранен.", False
+
+
 @base_router.message(Command("start"))
 async def func_start(message: types.Message):
     await message.reply(Config.BASE_PHRASES.START)
@@ -181,61 +235,8 @@ async def pending_action_receiver(message: types.Message, bot: Bot):
         await message.reply("Действие отменено.")
         return
 
-    if action == "set_history":
-        try:
-            value = int(message.text.strip())
-        except Exception:
-            pending_actions[chat_id] = action_info
-            await message.reply(
-                "Пожалуйста, введите положительное целое число, и попробуйте снова."
-            )
-            return
-        max_allowed = 25 if cfg.get("is_premium") else 10
-        if value > max_allowed:
-            pending_actions[chat_id] = action_info
-            await message.reply(
-                f"Значение слишком больше, максимальное: {max_allowed} сообщений. Попробуйте снова"
-            )
-            return
-        await table.update({"id": chat_id}, {"history_maxlen": value})
-        await message_storage.ensure_chat(chat_id, maxlen=value)
-        await message.reply(f"Длина контекста изменена на: {value} сообщений")
-        return
-
-    if action == "set_prompt":
-        new_prompt = message.text.strip()
-        if not new_prompt:
-            pending_actions[chat_id] = action_info
-            await message.reply("Промпт не может быть пустым. Попробуйте снова")
-            return
-        await table.update(
-            {"id": chat_id}, {"prompt": new_prompt, "bot_mode": "CUSTOM"}
-        )
-        await message.reply("Промпт обновлен, и режим бота изменен на 'CUSTOM'")
-        return
-
-    if action == "set_botname":
-        name = message.text.strip()
-        if len(name) > 15:
-            pending_actions[chat_id] = action_info
-            await message.reply(
-                "Имя слишком большое, максимум 15 символов. Попробуйте снова"
-            )
-            return
-        await table.update({"id": chat_id}, {"bot_name": name})
-        await message.reply(f"Имя бота изменено на '{name}'.")
-        return
-
-    if action == "set_openrouter":
-        key = message.text.strip()
-        if len(key) < 10:
-            pending_actions[chat_id] = action_info
-            await message.reply(
-                "Предоставленный ключ выглядит слишком коротким; пожалуйста, перепроверьте и отправьте заново."
-            )
-            return
-        await table.update({"id": chat_id}, {"openrouter_key": key})
-        await message.reply("Ключ OpenRouter сохранен.")
-        return
-
-    await message.reply("Действие не распознано или срок действия уже истек.")
+    processor = PendingActionProcessor(table, cfg)
+    reply, put_back = await processor.process(action, message)
+    await message.reply(reply)
+    if put_back:
+        pending_actions[chat_id] = action_info
