@@ -18,8 +18,8 @@ async def main():
     dp = Dispatcher()
 
     dp.include_router(ai_router)
-    dp.include_router(base_router)
     dp.include_router(md_router)
+    dp.include_router(base_router)
 
     dp.message.middleware(HistoryMiddleware())
 

@@ -79,13 +79,6 @@ class PendingActionProcessor:
         await self.table.update({"id": message.chat.id}, {"openrouter_key": key})
         return "✅ Ключ OpenRouter сохранен.", False
 
-
-@base_router.message()
-async def handle_all_messages(message: types.Message):
-    # Dummy handler to ensure middleware runs for all messages
-    pass
-
-
 @base_router.message(Command("help"))
 async def func_help(message: types.Message):
     await message.reply(Config.BASE_PHRASES.HELP)
@@ -255,3 +248,8 @@ async def pending_action_receiver(message: types.Message, bot: Bot):
     await message.reply(reply)
     if put_back:
         pending_actions[chat_id] = action_info
+
+@base_router.message()
+async def handle_all_messages(message: types.Message):
+    # Dummy handler to ensure middleware runs for all messages
+    pass
