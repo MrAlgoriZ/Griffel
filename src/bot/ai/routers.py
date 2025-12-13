@@ -4,7 +4,7 @@ from aiogram.filters import Command, CommandObject
 import asyncio
 
 from src.bot.ai.service.default_models import DefaultModels, Model
-from src.bot.ai.utils.msg_parse import MessageParser
+from src.bot.ai.utils.msg_parse import MessageParser, ResponseProcessor
 from src.bot.core.storage.storage import message_storage
 from src.database.db_req import Table
 from src.utils.env import Env
@@ -34,6 +34,9 @@ async def func_handle_request(message: Message, bot: Bot, command: CommandObject
 
     msg = await message.answer("печатает...")
     storage = list(message_storage.storage.get(chat_id, []))
+    current_parsed = MessageParser.parse(message)
+    if storage and storage[-1] == current_parsed:
+        storage.pop()  # Remove the current message from history to avoid duplication
 
     if getattr(command, "args", None):
         current_question = f"{message.from_user.full_name}: {command.args.strip()}"
@@ -69,5 +72,6 @@ async def func_handle_request(message: Message, bot: Bot, command: CommandObject
     await msg.delete()
     if response:
         debug("AI responsed successfully")
+        response = ResponseProcessor.process(response)
         await message_storage.add_raw(response, chat_id, bot)
-        await message.reply(response)
+        await message.reply(response, parse_mode="Markdown")

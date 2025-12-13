@@ -37,49 +37,53 @@ class PendingActionProcessor:
             value = int(message.text.strip())
         except Exception:
             return (
-                "Пожалуйста, введите положительное целое число, и попробуйте снова.",
+                "❌ Пожалуйста, введите положительное целое число, и попробуйте снова.",
                 True,
             )
         max_allowed = 25 if self.cfg.get("is_premium") else 10
         if value > max_allowed:
             return (
-                f"Значение слишком больше, максимальное: {max_allowed} сообщений. Попробуйте снова",
+                f"❌ Значение слишком больше, максимальное: {max_allowed} сообщений. Попробуйте снова",
                 True,
             )
         await self.table.update({"id": message.chat.id}, {"history_maxlen": value})
         await message_storage.ensure_chat(message.chat.id, maxlen=value)
-        return f"Длина контекста изменена на: {value} сообщений", False
+        return f"✅ Длина контекста изменена на: {value} сообщений", False
 
     async def _process_set_prompt(self, message: types.Message) -> tuple[str, bool]:
         new_prompt = message.text.strip()
         if not new_prompt:
-            return "Промпт не может быть пустым. Попробуйте снова", True
+            return "❌ Промпт не может быть пустым. Попробуйте снова", True
         await self.table.update(
             {"id": message.chat.id}, {"prompt": new_prompt, "bot_mode": "CUSTOM"}
         )
-        return "Промпт обновлен, и режим бота изменен на 'CUSTOM'", False
+        return "✅ Промпт обновлен, и режим бота изменен на 'CUSTOM'", False
 
     async def _process_set_botname(self, message: types.Message) -> tuple[str, bool]:
         name = message.text.strip()
         if len(name) > 15:
-            return "Имя слишком большое, максимум 15 символов. Попробуйте снова", True
+            return (
+                "❌ Имя слишком большое, максимум 15 символов. Попробуйте снова",
+                True,
+            )
         await self.table.update({"id": message.chat.id}, {"bot_name": name})
-        return f"Имя бота изменено на '{name}'.", False
+        return f"✅ Имя бота изменено на '{name}'.", False
 
     async def _process_set_openrouter(self, message: types.Message) -> tuple[str, bool]:
         key = message.text.strip()
         if len(key) < 10:
             return (
-                "Предоставленный ключ выглядит слишком коротким; пожалуйста, перепроверьте и отправьте заново.",
+                "❌ Предоставленный ключ выглядит слишком коротким; пожалуйста, перепроверьте и отправьте заново.",
                 True,
             )
         await self.table.update({"id": message.chat.id}, {"openrouter_key": key})
-        return "Ключ OpenRouter сохранен.", False
+        return "✅ Ключ OpenRouter сохранен.", False
 
 
-@base_router.message(Command("start"))
-async def func_start(message: types.Message):
-    await message.reply(Config.BASE_PHRASES.START)
+@base_router.message()
+async def handle_all_messages(message: types.Message):
+    # Dummy handler to ensure middleware runs for all messages
+    pass
 
 
 @base_router.message(Command("help"))
@@ -237,11 +241,13 @@ async def pending_action_receiver(message: types.Message, bot: Bot):
     cfg = await table.select_one({"id": chat_id}) or {}
 
     if not await is_admin(message, bot):
-        await message.reply("Только администраторы чата могут выполнить это действие")
+        await message.reply(
+            "❌ Только администраторы чата могут выполнить это действие"
+        )
         return
 
     if message.text.strip().lower() == "skip":
-        await message.reply("Действие отменено.")
+        await message.reply("✅ Действие отменено.")
         return
 
     processor = PendingActionProcessor(table, cfg)

@@ -1,4 +1,5 @@
 from aiogram.types import Message
+import re
 
 
 class MessageParser:
@@ -38,3 +39,24 @@ class MessageParser:
             result = current_msg
 
         return result
+
+
+class ResponseProcessor:
+    @staticmethod
+    def process(text: str) -> str:
+        text = re.sub(r"^(\s*)- ", r"\1• ", text, flags=re.MULTILINE)
+        
+        text = re.sub(r"^### (.*)", r"📌 \1", text, flags=re.MULTILINE)
+        text = re.sub(r"^## (.*)", r"📍 \1", text, flags=re.MULTILINE)
+        text = re.sub(r"^# (.*)", r"🏷️ \1", text, flags=re.MULTILINE)
+        
+        text = re.sub(r"\b(question|ask)\b", r"❓ \1", text, flags=re.IGNORECASE)
+        text = re.sub(r"\b(answer|reply)\b", r"💡 \1", text, flags=re.IGNORECASE)
+        text = re.sub(
+            r"\b(example|for instance)\b", r"🔍 \1", text, flags=re.IGNORECASE
+        )
+        text = re.sub(r"\b(note|important)\b", r"📝 \1", text, flags=re.IGNORECASE)
+        text = re.sub(r"\b(warning|caution)\b", r"⚠️ \1", text, flags=re.IGNORECASE)
+        text = re.sub(r"\b(success|good)\b", r"✅ \1", text, flags=re.IGNORECASE)
+        text = re.sub(r"\b(error|fail)\b", r"❌ \1", text, flags=re.IGNORECASE)
+        return text
