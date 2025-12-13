@@ -43,12 +43,31 @@ async def func_handle_request(message: Message, bot: Bot, command: CommandObject
     history_block = "\n".join(storage) if storage else ""
     parsed_messages = f"\nКонтекст: \n{history_block}\nТекущий вопрос: {current_question}\nТвой ответ:"
     debug(parsed_messages)
-    response = await asyncio.to_thread(model_obj.make_request, parsed_messages)
-    match response:
-        case None | "":
-            debug("AI returned empty response")
-        case _:
-            debug("AI responsed successfully")
+    api_key = cfg.get("openrouter_key")
+    try:
+        if api_key:
+            response = await asyncio.to_thread(
+                model_obj.make_request, parsed_messages, api_key=api_key
+            )
+        else:
+            response = await asyncio.to_thread(model_obj.make_request, parsed_messages)
+    except Exception as e:
+        debug(f"Error in AI request: {e}")
+        if api_key:
+            await msg.delete()
+            await message.reply(
+                "Ключ OpenRouter недействителен. Пожалуйста, проверьте ключ и попробуйте снова."
+            )
+            await table.update({"id": chat_id}, {"openrouter_key": ""})
+        else:
+            await msg.delete()
+            await message.reply(
+                "Произошла ошибка, ответ не получен. Пожалуйста, попробуйте еще раз."
+            )
+        return
+
     await msg.delete()
-    await message_storage.add_raw(response, chat_id, bot)
-    await message.reply(response)
+    if response:
+        debug("AI responsed successfully")
+        await message_storage.add_raw(response, chat_id, bot)
+        await message.reply(response)

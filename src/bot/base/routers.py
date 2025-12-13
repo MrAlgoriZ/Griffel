@@ -36,10 +36,16 @@ class PendingActionProcessor:
         try:
             value = int(message.text.strip())
         except Exception:
-            return "Пожалуйста, введите положительное целое число, и попробуйте снова.", True
+            return (
+                "Пожалуйста, введите положительное целое число, и попробуйте снова.",
+                True,
+            )
         max_allowed = 25 if self.cfg.get("is_premium") else 10
         if value > max_allowed:
-            return f"Значение слишком больше, максимальное: {max_allowed} сообщений. Попробуйте снова", True
+            return (
+                f"Значение слишком больше, максимальное: {max_allowed} сообщений. Попробуйте снова",
+                True,
+            )
         await self.table.update({"id": message.chat.id}, {"history_maxlen": value})
         await message_storage.ensure_chat(message.chat.id, maxlen=value)
         return f"Длина контекста изменена на: {value} сообщений", False
@@ -63,7 +69,10 @@ class PendingActionProcessor:
     async def _process_set_openrouter(self, message: types.Message) -> tuple[str, bool]:
         key = message.text.strip()
         if len(key) < 10:
-            return "Предоставленный ключ выглядит слишком коротким; пожалуйста, перепроверьте и отправьте заново.", True
+            return (
+                "Предоставленный ключ выглядит слишком коротким; пожалуйста, перепроверьте и отправьте заново.",
+                True,
+            )
         await self.table.update({"id": message.chat.id}, {"openrouter_key": key})
         return "Ключ OpenRouter сохранен.", False
 

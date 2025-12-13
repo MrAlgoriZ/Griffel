@@ -51,8 +51,8 @@ class RamMessageStorage(MessageStorage):
         async with self.lock:
             if chat_id not in self.storage:
                 self.storage[chat_id] = deque(maxlen=10)
-            bot_name = await bot.get_my_name()
-            self.storage[chat_id].append(f"{bot_name}: {text};")
+            bot_name = (await bot.get_my_name()).name
+            self.storage[chat_id].append(f"{bot_name}: {text}")
 
 
 message_storage = (
