@@ -40,6 +40,19 @@ class Model:
 
         return completion.choices[0].message.content
 
+    @staticmethod
+    def test_api_key(api_key: str) -> bool:
+        try:
+            client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key)
+            client.chat.completions.create(
+                model="x-ai/grok-4.1-fast",
+                messages=[{"role": "user", "content": "Test"}],
+                max_tokens=1,
+            )
+            return True
+        except Exception:
+            return False
+
 
 @dataclass
 class DefaultModels:

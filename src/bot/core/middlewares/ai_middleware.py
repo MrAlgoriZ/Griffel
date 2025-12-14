@@ -12,5 +12,7 @@ class HistoryMiddleware(BaseMiddleware):
         message: Message,
         data: Dict[str, Any],
     ) -> Any:
+        if message.text and message.text.startswith("/addkey"):
+            return await handler(message, data)
         await message_storage.add(message)
         return await handler(message, data)

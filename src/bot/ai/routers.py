@@ -2,6 +2,7 @@ from aiogram import Router, Bot
 from aiogram.types import Message
 from aiogram.filters import Command, CommandObject
 import asyncio
+import time
 
 from src.bot.ai.service.default_models import DefaultModels, Model
 from src.bot.ai.utils.msg_parse import MessageParser, ResponseProcessor
@@ -12,7 +13,24 @@ from src.logging.logging import get_debug_logger
 
 debug = get_debug_logger().debug
 
+last_ask_time: dict[int, float] = {}
+
 ai_router = Router()
+
+
+@ai_router.message(Command("addkey"))
+async def func_add_key(message: Message, command: CommandObject):
+    if not command.args:
+        await message.reply("Пожалуйста, укажите ключ: /addkey <ваш_ключ>")
+        return
+    key = command.args.strip()
+    chat_id = message.chat.id
+    table = Table(Env.DATABASE.table)
+    if Model.test_api_key(key):
+        await table.update({"id": chat_id}, {"openrouter_key": key})
+        await message.reply("Ключ OpenRouter сохранен.")
+    else:
+        await message.reply(f"Недействительный ключ OpenRouter!")
 
 
 @ai_router.message(Command("ask"))
@@ -22,6 +40,11 @@ async def func_handle_request(message: Message, bot: Bot, command: CommandObject
     cfg = await table.select_one({"id": chat_id}) or {}  # Загрузка конфигурации чата
 
     if api_key := cfg.get("openrouter_key"):
+        current_time = time.time()
+        if chat_id in last_ask_time and current_time - last_ask_time[chat_id] < 5:
+            await message.reply("Пожалуйста, подождите 5 секунд перед следующим запросом /ask.")
+            return
+        last_ask_time[chat_id] = current_time
         bot_mode = (cfg.get("bot_mode") or "SMART").upper()  # Получение режима бота
         if bot_mode == "CUSTOM":
             custom_prompt = cfg.get("prompt") or DefaultModels.SMART.system_prompt

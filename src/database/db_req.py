@@ -116,6 +116,22 @@ class Table(BaseTable):
         if not data:
             raise ValueError("Cannot update with empty data")
 
+        if "id" in conditions:
+            existing = await self.select_one(conditions)
+            if not existing:
+                from src.bot.ai.service.default_models import DefaultModels
+                default_prompt = DefaultModels.SMART.system_prompt
+                await self.insert({
+                    "id": conditions["id"],
+                    "prompt": default_prompt,
+                    "history_maxlen": 10,
+                    "is_premium": False,
+                    "bot_name": "",
+                    "bot_mode": "SMART",
+                    "chat_rules": "",
+                    "openrouter_key": "",
+                })
+
         data_to_update = dict(data)
 
         if "bot_mode" in data_to_update and "prompt" not in data_to_update:
