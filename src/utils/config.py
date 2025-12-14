@@ -5,7 +5,7 @@ from cachetools import cached
 
 
 @cached({})
-def load_config(path: Path = Path("config/prompts.json")) -> dict:
+def load_config(path: Path = Path("config/phrases.json")) -> dict:
     with path.open("r", encoding="utf-8") as file:
         return json.load(file)
 

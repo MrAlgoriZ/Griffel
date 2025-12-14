@@ -83,7 +83,7 @@ class AutoAnswer:
                 debug("AI responsed successfully")
                 response = ResponseProcessor.process(response)
                 await message_storage.add_raw(response, chat_id, self.bot)
-                await self.message.reply(response, parse_mode="Markdown")
+                await self.message.reply(ResponseProcessor)
                 return
             await self.message.reply(
                 "Произошла ошибка, ответ не получен. Попробуйте позже."

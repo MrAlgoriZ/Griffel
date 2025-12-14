@@ -254,7 +254,7 @@ async def pending_action_receiver(message: types.Message, bot: Bot):
 
 
 @base_router.message()
-async def handle_all_messages(message: types.Message):
+async def handle_all_messages(message: types.Message, bot: Bot):
     message_count[message.chat.id] = message_count.get(message.chat.id, 0) + 1
     if message_count[message.chat.id] % 20 == 0:
-        await AutoAnswer(message).get_auto_reply()
+        await AutoAnswer(message, bot).get_auto_reply()

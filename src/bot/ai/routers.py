@@ -64,7 +64,7 @@ async def func_handle_request(message: Message, bot: Bot, command: CommandObject
             debug("AI responsed successfully")
             response = ResponseProcessor.process(response)
             await message_storage.add_raw(response, chat_id, bot)
-            await message.reply(response, parse_mode="Markdown")
+            await message.reply(response)
             return
         await message.reply("Произошла ошибка, ответ не получен. Попробуйте позже.")
     else:

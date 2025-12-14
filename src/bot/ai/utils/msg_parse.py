@@ -6,11 +6,7 @@ class MessageParser:
     @staticmethod
     def parse(message: Message) -> str:
         def one_message_parse(msg):
-            first_name = msg.from_user.first_name
-            last_name = (
-                msg.from_user.last_name if msg.from_user.last_name is not None else ""
-            )
-            full_name = f"{first_name} {last_name}".strip()
+            full_name = msg.from_user.full_name
 
             if msg.text or msg.caption:
                 text = msg.text.strip() if msg.text else ""
