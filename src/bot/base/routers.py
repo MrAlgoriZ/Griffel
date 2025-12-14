@@ -8,10 +8,12 @@ from src.database.db_req import Table
 from src.bot.ai.service.default_models import DefaultModels
 from src.bot.base import keyboards
 from src.bot.core.storage.storage import message_storage
+from src.bot.base.auto_answer import AutoAnswer
 
 base_router = Router()
 
 pending_actions: dict[int, dict] = {}
+message_count: dict[int, int] = {}
 
 
 class PendingActionProcessor:
@@ -78,6 +80,7 @@ class PendingActionProcessor:
             )
         await self.table.update({"id": message.chat.id}, {"openrouter_key": key})
         return "✅ Ключ OpenRouter сохранен.", False
+
 
 @base_router.message(Command("help"))
 async def func_help(message: types.Message):
@@ -249,7 +252,9 @@ async def pending_action_receiver(message: types.Message, bot: Bot):
     if put_back:
         pending_actions[chat_id] = action_info
 
+
 @base_router.message()
 async def handle_all_messages(message: types.Message):
-    # Dummy handler to ensure middleware runs for all messages
-    pass
+    message_count[message.chat.id] = message_count.get(message.chat.id, 0) + 1
+    if message_count[message.chat.id] % 20 == 0:
+        await AutoAnswer(message).get_auto_reply()

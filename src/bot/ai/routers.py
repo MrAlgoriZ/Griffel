@@ -21,57 +21,53 @@ async def func_handle_request(message: Message, bot: Bot, command: CommandObject
     table = Table(Env.DATABASE.table)
     cfg = await table.select_one({"id": chat_id}) or {}  # Загрузка конфигурации чата
 
-    bot_mode = (cfg.get("bot_mode") or "SMART").upper()  # Получение режима бота
-    if bot_mode == "CUSTOM":
-        custom_prompt = cfg.get("prompt") or DefaultModels.SMART.system_prompt
-        model_obj = Model(
-            system_prompt=custom_prompt,
-        )
-    else:
-        model_obj = getattr(DefaultModels, bot_mode, None)
-        if not model_obj:
-            model_obj = DefaultModels.SMART
+    if api_key := cfg.get("openrouter_key"):
+        bot_mode = (cfg.get("bot_mode") or "SMART").upper()  # Получение режима бота
+        if bot_mode == "CUSTOM":
+            custom_prompt = cfg.get("prompt") or DefaultModels.SMART.system_prompt
+            model_obj = Model(
+                system_prompt=custom_prompt,
+            )
+        else:
+            model_obj = getattr(DefaultModels, bot_mode, None)
+            if not model_obj:
+                model_obj = DefaultModels.SMART
 
-    msg = await message.answer("печатает...")
-    storage = list(message_storage.storage.get(chat_id, []))
-    current_parsed = MessageParser.parse(message)
-    if storage and storage[-1] == current_parsed:
-        storage.pop()  # Remove the current message from history to avoid duplication
+        msg = await message.answer("печатает...")
+        storage = list(message_storage.storage.get(chat_id, []))
+        current_parsed = MessageParser.parse(message)
+        if storage and storage[-1] == current_parsed:
+            storage.pop()
 
-    if getattr(command, "args", None):
-        current_question = f"{message.from_user.full_name}: {command.args.strip()}"
-    else:
-        current_question = MessageParser.parse(message)
+        if getattr(command, "args", None):
+            current_question = f"{message.from_user.full_name}: {command.args.strip()}"
+        else:
+            current_question = MessageParser.parse(message)
 
-    history_block = "\n".join(storage) if storage else ""
-    parsed_messages = f"\nКонтекст: \n{history_block}\nТекущий вопрос: {current_question}\nТвой ответ:"
-    debug(parsed_messages)
-    api_key = cfg.get("openrouter_key")
-    try:
-        if api_key:
+        history_block = "\n".join(storage) if storage else ""
+        parsed_messages = f"\nКонтекст: \n{history_block}\nТекущий вопрос: {current_question}\nТвой ответ:"
+        debug(parsed_messages)
+        try:
             response = await asyncio.to_thread(
                 model_obj.make_request, parsed_messages, api_key=api_key
             )
-        else:
-            response = await asyncio.to_thread(model_obj.make_request, parsed_messages)
-    except Exception as e:
-        debug(f"Error in AI request: {e}")
-        if api_key:
+        except Exception as e:
+            debug(f"Error in AI request: {e}")
             await msg.delete()
             await message.reply(
-                "Ключ OpenRouter недействителен. Пожалуйста, проверьте ключ и попробуйте снова."
+                "Произошла ошибка, ответ не получен. Пожалуйста, попробуйте позже."
             )
-            await table.update({"id": chat_id}, {"openrouter_key": ""})
-        else:
-            await msg.delete()
-            await message.reply(
-                "Произошла ошибка, ответ не получен. Пожалуйста, попробуйте еще раз."
-            )
-        return
+            return
 
-    await msg.delete()
-    if response:
-        debug("AI responsed successfully")
-        response = ResponseProcessor.process(response)
-        await message_storage.add_raw(response, chat_id, bot)
-        await message.reply(response, parse_mode="Markdown")
+        await msg.delete()
+        if response:
+            debug("AI responsed successfully")
+            response = ResponseProcessor.process(response)
+            await message_storage.add_raw(response, chat_id, bot)
+            await message.reply(response, parse_mode="Markdown")
+            return
+        await message.reply("Произошла ошибка, ответ не получен. Попробуйте позже.")
+    else:
+        await message.reply(
+            "Ключ OpenRouter не настроен для этого чата. Пожалуйста, установите ключ с помощью команды /addkey <ваш_ключ>."
+        )

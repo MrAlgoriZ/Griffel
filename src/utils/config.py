@@ -5,7 +5,7 @@ from cachetools import cached
 
 
 @cached({})
-def load_config(path: Path = Path("config/config.json")) -> dict:
+def load_config(path: Path = Path("config/prompts.json")) -> dict:
     with path.open("r", encoding="utf-8") as file:
         return json.load(file)
 
@@ -23,6 +23,7 @@ class ConfigSystemPrompts:
 class ConfigBasePhrases:
     START = load_config().get("base_phrases").get("start")
     HELP = load_config().get("base_phrases").get("help")
+    SUPPORT = load_config().get("base_phrases").get("support")
 
 
 @dataclass
