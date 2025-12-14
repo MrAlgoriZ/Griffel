@@ -54,7 +54,6 @@ A Telegram bot built with aiogram that provides AI-powered conversations, config
        prompt TEXT,
        historyMaxlen SMALLINT DEFAULT 10,
        isPremium BOOLEAN DEFAULT FALSE,
-       botName TEXT,
        botMode TEXT DEFAULT 'SMART',
        chatRules TEXT,
        openRouterKey TEXT

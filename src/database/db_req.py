@@ -120,17 +120,19 @@ class Table(BaseTable):
             existing = await self.select_one(conditions)
             if not existing:
                 from src.bot.ai.service.default_models import DefaultModels
+
                 default_prompt = DefaultModels.SMART.system_prompt
-                await self.insert({
-                    "id": conditions["id"],
-                    "prompt": default_prompt,
-                    "history_maxlen": 10,
-                    "is_premium": False,
-                    "bot_name": "",
-                    "bot_mode": "SMART",
-                    "chat_rules": "",
-                    "openrouter_key": "",
-                })
+                await self.insert(
+                    {
+                        "id": conditions["id"],
+                        "prompt": default_prompt,
+                        "history_maxlen": 10,
+                        "is_premium": False,
+                        "bot_mode": "SMART",
+                        "chat_rules": "",
+                        "openrouter_key": "",
+                    }
+                )
 
         data_to_update = dict(data)
 

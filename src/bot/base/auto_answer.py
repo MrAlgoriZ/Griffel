@@ -26,14 +26,14 @@ class AutoAnswer:
     async def get_auto_reply(self):
         roll = random.random()
 
-        if roll < 0.04: # 4%
+        if roll < 0.04:  # 4%
             await self.support()
 
-        elif roll < 0.06: # 6% (4% + 2%)
+        elif roll < 0.06:  # 6% (4% + 2%)
             await self.support()
             await self.ai_answer()
 
-        else: # 94%
+        else:  # 94%
             await self.ai_answer()
 
     async def support(self):

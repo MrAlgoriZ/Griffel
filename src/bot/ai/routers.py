@@ -30,7 +30,7 @@ async def func_add_key(message: Message, command: CommandObject):
         await table.update({"id": chat_id}, {"openrouter_key": key})
         await message.reply("Ключ OpenRouter сохранен.")
     else:
-        await message.reply(f"Недействительный ключ OpenRouter!")
+        await message.reply("Недействительный ключ OpenRouter!")
 
 
 @ai_router.message(Command("ask"))
@@ -42,7 +42,9 @@ async def func_handle_request(message: Message, bot: Bot, command: CommandObject
     if api_key := cfg.get("openrouter_key"):
         current_time = time.time()
         if chat_id in last_ask_time and current_time - last_ask_time[chat_id] < 5:
-            await message.reply("Пожалуйста, подождите 5 секунд перед следующим запросом /ask.")
+            await message.reply(
+                "Пожалуйста, подождите 5 секунд перед следующим запросом /ask."
+            )
             return
         last_ask_time[chat_id] = current_time
         bot_mode = (cfg.get("bot_mode") or "SMART").upper()  # Получение режима бота

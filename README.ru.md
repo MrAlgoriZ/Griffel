@@ -54,7 +54,6 @@ Telegram бот, построенный на aiogram, который предо�
        prompt TEXT,
        historyMaxlen SMALLINT DEFAULT 10,
        isPremium BOOLEAN DEFAULT FALSE,
-       botName TEXT,
        botMode TEXT DEFAULT 'SMART',
        chatRules TEXT,
        openRouterKey TEXT

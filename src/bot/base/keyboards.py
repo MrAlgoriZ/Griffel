@@ -6,7 +6,6 @@ def build_config_text(cfg: dict) -> str:
     lines = []
     lines.append(f"Макс. длина контекста: {cfg.get('history_maxlen')} (соо.)")
     lines.append(f"Premium: {'Есть' if cfg.get('is_premium') else 'Нет'}")
-    lines.append(f"Имя бота: {cfg.get('bot_name') or 'Гриффель'}")
     lines.append(f"Режим бота: {cfg.get('bot_mode') or '(не установлен)'}")
     lines.append(
         f"Правила чата: {'(установлены)' if cfg.get('chat_rules') else '(не установлены)'}"
@@ -70,9 +69,6 @@ def build_config_keyboard(cfg: dict = {}) -> InlineKeyboardMarkup:
         ]
     )
 
-    rows.append(
-        [InlineKeyboardButton(text="Поставить имя бота", callback_data="cfg:botname")]
-    )
     rows.append(
         [
             InlineKeyboardButton(

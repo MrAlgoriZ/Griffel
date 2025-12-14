@@ -27,8 +27,6 @@ class PendingActionProcessor:
                 return await self._process_set_history(message)
             case "set_prompt":
                 return await self._process_set_prompt(message)
-            case "set_botname":
-                return await self._process_set_botname(message)
             case "set_openrouter":
                 return await self._process_set_openrouter(message)
             case _:
@@ -60,16 +58,6 @@ class PendingActionProcessor:
             {"id": message.chat.id}, {"prompt": new_prompt, "bot_mode": "CUSTOM"}
         )
         return "✅ Промпт обновлен, и режим бота изменен на 'CUSTOM'", False
-
-    async def _process_set_botname(self, message: types.Message) -> tuple[str, bool]:
-        name = message.text.strip()
-        if len(name) > 15:
-            return (
-                "❌ Имя слишком большое, максимум 15 символов. Попробуйте снова",
-                True,
-            )
-        await self.table.update({"id": message.chat.id}, {"bot_name": name})
-        return f"✅ Имя бота изменено на '{name}'.", False
 
     async def _process_set_openrouter(self, message: types.Message) -> tuple[str, bool]:
         key = message.text.strip()
@@ -107,7 +95,6 @@ async def func_config(message: types.Message, bot: Bot):
                 "prompt": default_prompt,
                 "history_maxlen": 10,
                 "is_premium": False,
-                "bot_name": "",
                 "bot_mode": "SMART",
                 "chat_rules": "",
                 "openrouter_key": "",
@@ -190,9 +177,15 @@ async def callback_config(cb: types.CallbackQuery, bot: Bot):
             return
 
         if model_name == "CUSTOM":
-            default_prompt = DefaultModels.SMART.system_prompt
+            default_prompt = [
+                DefaultModels.SMART.system_prompt,
+                DefaultModels.AGRESSIVE.system_prompt,
+                DefaultModels.KAWAII.system_prompt,
+                DefaultModels.MODERATOR.system_prompt,
+                DefaultModels.PETER.system_prompt,
+            ]
             current_prompt = cfg.get("prompt") or ""
-            if not current_prompt or current_prompt == default_prompt:
+            if not current_prompt or current_prompt in default_prompt:
                 await cb.answer(
                     "Чтобы использовать кастомный режим, вы должны поменять промпт."
                 )
@@ -200,14 +193,6 @@ async def callback_config(cb: types.CallbackQuery, bot: Bot):
 
         await table.update({"id": chat_id}, {"bot_mode": model_name})
         await cb.message.answer(f"Режим бота изменен на {model_name}.")
-        await cb.answer()
-        return
-
-    if action == "botname":
-        pending_actions[chat_id] = {"action": "set_botname"}
-        await cb.message.answer(
-            "Отправьте новое имя бота (макс. 15 символов). Отправьте 'skip', чтобы отказаться."
-        )
         await cb.answer()
         return
 
@@ -222,6 +207,7 @@ async def callback_config(cb: types.CallbackQuery, bot: Bot):
     if action == "show":
         text = keyboards.build_config_text(cfg)
         kb = keyboards.build_config_keyboard(cfg)
+        await cb.message.delete()
         await cb.message.answer(text, reply_markup=kb)
         await cb.answer()
         return
