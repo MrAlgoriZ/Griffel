@@ -9,6 +9,7 @@ from src.bot.ai.service.default_models import DefaultModels
 from src.bot.base import keyboards
 from src.bot.core.storage.storage import message_storage
 from src.bot.base.auto_answer import AutoAnswer
+from src.bot.base.commands.rules import ChatRulesManager
 
 base_router = Router()
 
@@ -110,6 +111,40 @@ async def func_config(message: types.Message, bot: Bot):
 async def func_get_author(message: types.Message):
     await message.reply(Config.BASE_PHRASES.AUTHOR)
 
+@base_router.message(Command("rules"))
+async def func_get_rules(message: types.Message):
+    manager = ChatRulesManager(Table(Env.DATABASE.table))
+    rules = await manager.get_rules(message.chat.id)
+    await message.reply(rules)
+
+@base_router.message(F.text.lower().startswith("+правила"))
+async def func_add_rules(message: types.Message):
+    new_rules = message.text[len("+правила"):].strip()
+    if not new_rules:
+        await message.reply("Пожалуйста, укажите правила после '+правила'")
+        return
+    manager = ChatRulesManager(Table(Env.DATABASE.table))
+    result = await manager.add_rules(message, new_rules)
+    await message.reply(result)
+
+@base_router.message(F.text.lower().startswith("-правила"))
+async def func_delete_rules(message: types.Message):
+    if not await is_admin(message, message.bot):
+        await message.reply("Только администраторы могут изменять правила.")
+        return
+
+    pending_actions[message.chat.id] = {"action": "delete_rules"}
+    await message.reply("Вы уверены, что хотите удалить все правила? Отправьте 'да' для подтверждения или 'нет' для отмены.")
+
+@base_router.message(F.text.lower().startswith("*правила"))
+async def func_edit_rules(message: types.Message):
+    new_rules = message.text[len("*правила"):].strip()
+    if not new_rules:
+        await message.reply("Пожалуйста, укажите новые правила после '*правила'")
+        return
+    manager = ChatRulesManager(Table(Env.DATABASE.table))
+    result = await manager.edit_rules(message, new_rules)
+    await message.reply(result)
 
 @base_router.callback_query(F.data.startswith("cfg:"))
 async def callback_config(cb: types.CallbackQuery, bot: Bot):
@@ -231,6 +266,14 @@ async def pending_action_receiver(message: types.Message, bot: Bot):
     action = action_info.get("action")
     table = Table(Env.DATABASE.table)
     cfg = await table.select_one({"id": chat_id}) or {}
+
+    if action == "delete_rules":
+        if message.text.strip().lower() in ["да", "yes"]:
+            await table.update({"id": chat_id}, {"chat_rules": ""})
+            await message.reply("✅ Правила удалены.")
+        else:
+            await message.reply("✅ Действие отменено.")
+        return
 
     if not await is_admin(message, bot):
         await message.reply(
