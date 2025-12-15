@@ -4,7 +4,7 @@ from aiogram import Bot
 from aiogram.types import Message
 import asyncio
 
-from src.bot.ai.utils.msg_parse import MessageParser
+from bot.core.parse.message import MessageParser
 from src.logging.logging import get_debug_logger
 
 
@@ -45,7 +45,7 @@ class RamMessageStorage(MessageStorage):
         async with self.lock:  # Блокировка состояния, чтобы избежать "гонки"
             if message.chat.id not in self.storage:
                 self.storage[message.chat.id] = deque(maxlen=10)
-            self.storage[message.chat.id].append(MessageParser.parse(message))
+            self.storage[message.chat.id].append(MessageParser.message_to_text(message))
 
     async def add_raw(self, text: str, chat_id: int, bot: Bot):
         async with self.lock:

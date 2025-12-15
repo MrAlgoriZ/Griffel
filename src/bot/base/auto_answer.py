@@ -4,7 +4,6 @@ from aiogram import Bot
 import asyncio
 
 from src.bot.ai.service.default_models import DefaultModels, Model
-from src.bot.ai.utils.msg_parse import ResponseProcessor
 from src.bot.core.storage.storage import message_storage
 from src.utils.config import ConfigBasePhrases
 from src.logging.logging import get_debug_logger
@@ -81,9 +80,8 @@ class AutoAnswer:
             await msg.delete()
             if response:
                 debug("AI responsed successfully")
-                response = ResponseProcessor.process(response)
                 await message_storage.add_raw(response, chat_id, self.bot)
-                await self.message.reply(ResponseProcessor)
+                await self.message.reply(response)
                 return
             await self.message.reply(
                 "Произошла ошибка, ответ не получен. Попробуйте позже."

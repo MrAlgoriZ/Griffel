@@ -5,7 +5,7 @@ import asyncio
 import time
 
 from src.bot.ai.service.default_models import DefaultModels, Model
-from src.bot.ai.utils.msg_parse import MessageParser, ResponseProcessor
+from bot.core.parse.message import MessageParser
 from src.bot.core.storage.storage import message_storage
 from src.database.db_req import Table
 from src.utils.env import Env
@@ -60,14 +60,14 @@ async def func_handle_request(message: Message, bot: Bot, command: CommandObject
 
         msg = await message.answer("печатает...")
         storage = list(message_storage.storage.get(chat_id, []))
-        current_parsed = MessageParser.parse(message)
+        current_parsed = MessageParser.message_to_text(message)
         if storage and storage[-1] == current_parsed:
             storage.pop()
 
         if getattr(command, "args", None):
             current_question = f"{message.from_user.full_name}: {command.args.strip()}"
         else:
-            current_question = MessageParser.parse(message)
+            current_question = MessageParser.message_to_text(message)
 
         history_block = "\n".join(storage) if storage else ""
         parsed_messages = f"\nКонтекст: \n{history_block}\nТекущий вопрос: {current_question}\nТвой ответ:"
@@ -87,7 +87,6 @@ async def func_handle_request(message: Message, bot: Bot, command: CommandObject
         await msg.delete()
         if response:
             debug("AI responsed successfully")
-            response = ResponseProcessor.process(response)
             await message_storage.add_raw(response, chat_id, bot)
             await message.reply(response)
             return
