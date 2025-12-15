@@ -106,6 +106,11 @@ async def func_config(message: types.Message, bot: Bot):
     await message.reply(text, reply_markup=kb)
 
 
+@base_router.message(Command("author"))
+async def func_get_author(message: types.Message):
+    await message.reply(Config.BASE_PHRASES.AUTHOR)
+
+
 @base_router.callback_query(F.data.startswith("cfg:"))
 async def callback_config(cb: types.CallbackQuery, bot: Bot):
     data = cb.data.split(":", 2)
@@ -132,85 +137,90 @@ async def callback_config(cb: types.CallbackQuery, bot: Bot):
         await cb.answer("Только администраторы чата могут выполнить это действие")
         return
 
-    if action == "history":
-        if param == "custom":
-            pending_actions[chat_id] = {"action": "set_history"}
+    match action:
+        case "history":
+            if param == "custom":
+                pending_actions[chat_id] = {"action": "set_history"}
+                await cb.message.answer(
+                    "Введите желаемую длину контекста (число). Максимум 10 без Premium, 25 с Premium. Отправьте 'skip', чтобы отказаться."
+                )
+                await cb.answer()
+                return
+
+            try:
+                value = int(param)
+            except Exception:
+                await cb.answer("Неправильное значение")
+                return
+
+            max_allowed = 25 if cfg.get("is_premium") else 10
+            if value > max_allowed:
+                await cb.answer(
+                    f"Этот чат не имеет премиума, максимальное разрешенное значение: {max_allowed} сообщений."
+                )
+                return
+
+            await table.update({"id": chat_id}, {"history_maxlen": value})
             await cb.message.answer(
-                "Введите желаемую длину контекста (число). Максимум 10 без Premium, 25 с Premium. Отправьте 'skip', чтобы отказаться."
+                f"Макс. длина контекста изменена на {value} сообщений."
             )
             await cb.answer()
             return
 
-        try:
-            value = int(param)
-        except Exception:
-            await cb.answer("Неправильное значение")
-            return
-
-        max_allowed = 25 if cfg.get("is_premium") else 10
-        if value > max_allowed:
-            await cb.answer(
-                f"Этот чат не имеет премиума, максимальное разрешенное значение: {max_allowed} сообщений."
+        case "prompt":
+            if not cfg.get("is_premium"):
+                await cb.answer("Изменение промпта доступно только для Premium чатов")
+                return
+            pending_actions[chat_id] = {"action": "set_prompt"}
+            await cb.message.answer(
+                "Введите новый промпт в чат (поменяет режим бота на 'CUSTOM'). Отправьте 'skip', чтобы отказаться."
             )
+            await cb.answer()
             return
 
-        await table.update({"id": chat_id}, {"history_maxlen": value})
-        await cb.message.answer(f"Макс. длина контекста изменена на {value} сообщений.")
-        await cb.answer()
-        return
-
-    if action == "prompt":
-        if not cfg.get("is_premium"):
-            await cb.answer("Изменение промпта доступно только для Premium чатов")
-            return
-        pending_actions[chat_id] = {"action": "set_prompt"}
-        await cb.message.answer(
-            "Введите новый промпт в чат (поменяет режим бота на 'CUSTOM'). Отправьте 'skip', чтобы отказаться."
-        )
-        await cb.answer()
-        return
-
-    if action == "mode":
-        model_name = param.upper() if param else ""
-        if model_name == "MODERATOR":
-            await cb.answer("Модераторский режим нельзя установить через эту панель")
-            return
-
-        if model_name == "CUSTOM":
-            default_prompt = [
-                DefaultModels.SMART.system_prompt,
-                DefaultModels.AGRESSIVE.system_prompt,
-                DefaultModels.KAWAII.system_prompt,
-                DefaultModels.MODERATOR.system_prompt,
-                DefaultModels.PETER.system_prompt,
-            ]
-            current_prompt = cfg.get("prompt") or ""
-            if not current_prompt or current_prompt in default_prompt:
+        case "mode":
+            model_name = param.upper() if param else ""
+            if model_name == "MODERATOR":
                 await cb.answer(
-                    "Чтобы использовать кастомный режим, вы должны поменять промпт."
+                    "Модераторский режим нельзя установить через эту панель"
                 )
                 return
 
-        await table.update({"id": chat_id}, {"bot_mode": model_name})
-        await cb.message.answer(f"Режим бота изменен на {model_name}.")
-        await cb.answer()
-        return
+            if model_name == "CUSTOM":
+                default_prompt = [
+                    DefaultModels.SMART.system_prompt,
+                    DefaultModels.AGRESSIVE.system_prompt,
+                    DefaultModels.KAWAII.system_prompt,
+                    DefaultModels.MODERATOR.system_prompt,
+                    DefaultModels.PETER.system_prompt,
+                ]
+                current_prompt = cfg.get("prompt") or ""
+                if not current_prompt or current_prompt in default_prompt:
+                    await cb.answer(
+                        "Чтобы использовать кастомный режим, вы должны поменять промпт."
+                    )
+                    return
 
-    if action == "openrouter":
-        pending_actions[chat_id] = {"action": "set_openrouter"}
-        await cb.message.answer(
-            "Чтобы предоставить ключ OpenRouter, вставьте его в сообщение. Отправьте 'skip', чтобы отказаться."
-        )
-        await cb.answer()
-        return
+            await table.update({"id": chat_id}, {"bot_mode": model_name})
+            await cb.message.answer(f"Режим бота изменен на {model_name}.")
+            await cb.answer()
+            return
 
-    if action == "show":
-        text = keyboards.build_config_text(cfg)
-        kb = keyboards.build_config_keyboard(cfg)
-        await cb.message.delete()
-        await cb.message.answer(text, reply_markup=kb)
-        await cb.answer()
-        return
+        case "openrouter":
+            pending_actions[chat_id] = {"action": "set_openrouter"}
+            await cb.message.answer(
+                "Чтобы предоставить ключ OpenRouter, вставьте его в сообщение. Отправьте 'skip', чтобы отказаться."
+            )
+            await cb.answer()
+            return
+
+        case "show":
+            text = keyboards.build_config_text(cfg)
+            kb = keyboards.build_config_keyboard(cfg)
+            await cb.message.delete()
+            await cb.message.answer(text, reply_markup=kb)
+            await cb.answer()
+            return
 
 
 @base_router.message(lambda message: message.chat.id in pending_actions)

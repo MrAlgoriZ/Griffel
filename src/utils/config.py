@@ -10,20 +10,24 @@ def load_config(path: Path = Path("config/phrases.json")) -> dict:
         return json.load(file)
 
 
+config = load_config()
+
+
 @dataclass
 class ConfigSystemPrompts:
-    AGRESSIVE_PROMPT = load_config().get("system_prompts").get("AGRESSIVE_PROMPT")
-    PETER_PROMPT = load_config().get("system_prompts").get("PETER_PROMPT")
-    SMART_PROMPT = load_config().get("system_prompts").get("SMART_PROMPT")
-    MODERATOR_PROMPT = load_config().get("system_prompts").get("MODERATOR_PROMPT")
-    KAWAII_PROMPT = load_config().get("system_prompts").get("KAWAII_PROMPT")
+    AGRESSIVE_PROMPT = config.get("system_prompts").get("AGRESSIVE_PROMPT")
+    PETER_PROMPT = load_config.get("system_prompts").get("PETER_PROMPT")
+    SMART_PROMPT = load_config.get("system_prompts").get("SMART_PROMPT")
+    MODERATOR_PROMPT = load_config.get("system_prompts").get("MODERATOR_PROMPT")
+    KAWAII_PROMPT = load_config.get("system_prompts").get("KAWAII_PROMPT")
 
 
 @dataclass
 class ConfigBasePhrases:
-    START = load_config().get("base_phrases").get("start")
-    HELP = load_config().get("base_phrases").get("help")
-    SUPPORT = load_config().get("base_phrases").get("support")
+    START = load_config.get("base_phrases").get("start")
+    HELP = load_config.get("base_phrases").get("help")
+    SUPPORT = load_config.get("base_phrases").get("support")
+    AUTHOR = load_config.get("base_phrases").get("author")
 
 
 @dataclass

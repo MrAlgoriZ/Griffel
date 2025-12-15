@@ -18,5 +18,4 @@ class DatabaseEnv:
 class Env:
     IS_LOADED: bool = ENV
     TELEGRAM: str = getenv("TELEGRAM_TOKEN")
-    OPEN_ROUTER: str = getenv("OPEN_ROUTER_TOKEN")
     DATABASE = DatabaseEnv

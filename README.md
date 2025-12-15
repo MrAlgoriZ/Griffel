@@ -22,7 +22,6 @@ A Telegram bot built with aiogram that provides AI-powered conversations, config
 - Python 3.8+
 - PostgreSQL database
 - Telegram Bot Token
-- OpenRouter API key (optional, for enhanced AI responses)
 
 ### Setup
 1. Clone the repository:
@@ -39,7 +38,7 @@ A Telegram bot built with aiogram that provides AI-powered conversations, config
 3. Create a `.env` file with the following variables:
    ```env
    TELEGRAM_TOKEN=your_telegram_bot_token
-   OPEN_ROUTER_TOKEN=your_openrouter_api_key
+
    DATABASE_USER=your_db_user
    DATABASE_USER_PASSWORD=your_db_password
    DATABASE_NAME=your_db_name
