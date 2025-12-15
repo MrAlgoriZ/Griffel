@@ -4,7 +4,7 @@ from aiogram import Bot
 from aiogram.types import Message
 import asyncio
 
-from bot.core.parse.message import MessageParser
+from src.bot.core.parse.message import MessageParser
 from src.logging.logging import get_debug_logger
 
 

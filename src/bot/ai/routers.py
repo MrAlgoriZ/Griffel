@@ -5,7 +5,7 @@ import asyncio
 import time
 
 from src.bot.ai.service.default_models import DefaultModels, Model
-from bot.core.parse.message import MessageParser
+from src.bot.core.parse.message import MessageParser
 from src.bot.core.storage.storage import message_storage
 from src.database.db_req import Table
 from src.utils.env import Env

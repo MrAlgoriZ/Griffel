@@ -3,88 +3,56 @@ from aiogram.types import Message
 
 class MessageParser:
     @staticmethod
-    def message_to_text(message: Message) -> str:
-        def one_message_parse(msg):
-            full_name = msg.from_user.full_name
+    def _extract_text(msg: Message) -> str:
+        if msg.text:
+            return msg.text.strip()
+        if msg.caption:
+            return msg.caption.strip()
 
-            if msg.text or msg.caption:
-                text = msg.text.strip() if msg.text else ""
-            else:
-                kind = (
-                    "Voice message"
-                    if msg.voice
-                    else "Photo"
-                    if msg.photo
-                    else "Video"
-                    if msg.video
-                    else "Document"
-                    if msg.document
-                    else "Unknown message"
-                )
-                text = kind
+        if msg.voice:
+            return "Voice message"
+        if msg.photo:
+            return "Photo"
+        if msg.video:
+            return "Video"
+        if msg.document:
+            return "Document"
 
-            return f"{full_name}: {text}"
+        return "Unknown message"
 
-        current_msg = one_message_parse(message)
+    @staticmethod
+    def _message_to_dict_single(msg: Message) -> dict:
+        return {
+            "user": {
+                "id": msg.from_user.id,
+                "full_name": msg.from_user.full_name,
+            },
+            "text": MessageParser._extract_text(msg),
+        }
 
-        if message.reply_to_message is not None:
-            replied_msg = one_message_parse(message.reply_to_message)
-            result = f"{current_msg}->{replied_msg}"
-        else:
-            result = current_msg
-
-        return result
-    
     @staticmethod
     def message_to_dict(message: Message) -> dict:
-        def one_message_parse(msg):
-            full_name = msg.from_user.full_name
-            user_id = msg.from_user.id
+        result = MessageParser._message_to_dict_single(message)
 
-            if msg.text or msg.caption:
-                text = msg.text.strip() if msg.text else ""
-            else:
-                kind = (
-                    "Voice message"
-                    if msg.voice
-                    else "Photo"
-                    if msg.photo
-                    else "Video"
-                    if msg.video
-                    else "Document"
-                    if msg.document
-                    else "Unknown message"
-                )
-                text = kind
-
-            return {"user": {"full_name": full_name, "id": user_id}, "text": text}
-        
-        current_msg = one_message_parse(message)
-
-        if message.reply_to_message is not None:
-            replied_msg = one_message_parse(message.reply_to_message)
-            result = current_msg.update({"reply": replied_msg})
-        else:
-            result = current_msg
+        if message.reply_to_message:
+            result["reply"] = MessageParser._message_to_dict_single(
+                message.reply_to_message
+            )
 
         return result
 
     @staticmethod
     def dict_to_text(data: dict) -> str:
-        def one_message_dict_parse(msg_dict):
-            full_name = msg_dict["user"]["full_name"]
-            text = msg_dict["text"]
-            return f"{full_name}: {text}"
+        def format_msg(msg: dict) -> str:
+            return f"{msg['user']['full_name']}: {msg['text']}"
 
-        current_msg = one_message_dict_parse(data)
+        current = format_msg(data)
 
-        reply_part = data.get("reply")
+        if reply := data.get("reply"):
+            return f"{current}->{format_msg(reply)}"
 
-        if reply_part is not None:
-            replied_msg = one_message_dict_parse(reply_part)
-            result = f"{current_msg}->{replied_msg}"
+        return current
 
-        else:
-            result = current_msg
-
-        return result
+    @staticmethod
+    def message_to_text(message: Message) -> str:
+        return MessageParser.dict_to_text(MessageParser.message_to_dict(message))

@@ -1,5 +1,4 @@
 from openai import OpenAI
-from src.utils.env import Env
 from src.utils.config import Config
 from dataclasses import dataclass
 
@@ -25,7 +24,7 @@ class Model:
     def make_request(
         self,
         msg: str,
-        api_key: str = Env.OPEN_ROUTER,
+        api_key: str,
         model: str = "x-ai/grok-4.1-fast",
     ) -> str | None:
         client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key)

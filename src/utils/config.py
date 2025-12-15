@@ -16,18 +16,18 @@ config = load_config()
 @dataclass
 class ConfigSystemPrompts:
     AGRESSIVE_PROMPT = config.get("system_prompts").get("AGRESSIVE_PROMPT")
-    PETER_PROMPT = load_config.get("system_prompts").get("PETER_PROMPT")
-    SMART_PROMPT = load_config.get("system_prompts").get("SMART_PROMPT")
-    MODERATOR_PROMPT = load_config.get("system_prompts").get("MODERATOR_PROMPT")
-    KAWAII_PROMPT = load_config.get("system_prompts").get("KAWAII_PROMPT")
+    PETER_PROMPT = config.get("system_prompts").get("PETER_PROMPT")
+    SMART_PROMPT = config.get("system_prompts").get("SMART_PROMPT")
+    MODERATOR_PROMPT = config.get("system_prompts").get("MODERATOR_PROMPT")
+    KAWAII_PROMPT = config.get("system_prompts").get("KAWAII_PROMPT")
 
 
 @dataclass
 class ConfigBasePhrases:
-    START = load_config.get("base_phrases").get("start")
-    HELP = load_config.get("base_phrases").get("help")
-    SUPPORT = load_config.get("base_phrases").get("support")
-    AUTHOR = load_config.get("base_phrases").get("author")
+    START = config.get("base_phrases").get("start")
+    HELP = config.get("base_phrases").get("help")
+    SUPPORT = config.get("base_phrases").get("support")
+    AUTHOR = config.get("base_phrases").get("author")
 
 
 @dataclass
