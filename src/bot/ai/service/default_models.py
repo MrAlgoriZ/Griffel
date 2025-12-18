@@ -27,7 +27,11 @@ class Model:
         api_key: str,
         model: str = "x-ai/grok-4.1-fast",
     ) -> str | None:
-        client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key)
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=api_key,
+            project="https://github.com/MrAlgoriZ/Griffel",
+        )
         completion = client.chat.completions.create(
             model=model,
             messages=[{"role": self.role, "content": f"{self.system_prompt} {msg}"}],
