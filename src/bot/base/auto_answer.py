@@ -6,6 +6,7 @@ import asyncio
 from src.bot.ai.service.default_models import DefaultModels, Model
 from src.bot.core.storage.storage import message_storage
 from src.utils.config import ConfigBasePhrases
+from src.bot.moderator.ai_integration import ModeratorMode
 from src.logging.logging import get_debug_logger
 from src.database.db_req import Table
 from src.utils.env import Env
@@ -13,42 +14,67 @@ from src.utils.env import Env
 debug = get_debug_logger().debug
 
 
-class AutoAnswer:
-    def __init__(self, message: Message, bot: Bot):
+class Answer:
+    def answer(self):
+        raise NotImplementedError
+
+
+class ModeratorAnswer(Answer):
+    def __init__(self, message: Message, bot: Bot, cfg: dict):
         self.message = message
         self.bot = bot
-        self.auto_replies = [
-            self.support,
-            self.ai_answer,
-        ]
+        self.config = cfg
+        self.model = ModeratorMode()
 
-    async def get_auto_reply(self):
-        roll = random.random()
-
-        if roll < 0.04:  # 4%
-            await self.support()
-
-        elif roll < 0.06:  # 6% (4% + 2%)
-            await self.support()
-            await self.ai_answer()
-
-        else:  # 94%
-            await self.ai_answer()
-
-    async def support(self):
-        await self.message.answer(ConfigBasePhrases.SUPPORT)
-
-    async def ai_answer(self):
+    async def answer(self):
         chat_id = self.message.chat.id
-        table = Table(Env.DATABASE.table)
-        cfg = (
-            await table.select_one({"id": chat_id}) or {}
-        )  # Загрузка конфигурации чата
+        if api_key := self.config.get("openrouter_key"):
+            storage = list(message_storage.storage.get(chat_id, []))
+            current_question = storage[-1]
+            storage.pop()
 
-        if api_key := cfg.get("openrouter_key"):
-            bot_mode = (cfg.get("bot_mode") or "SMART").upper()  # Получение режима бота
+            history_block = "\n".join(storage) if storage else ""
+            parsed_messages = f"\nКонтекст: \n{history_block}\nТекущий вопрос: {current_question}\nТвой ответ:"
+            debug(parsed_messages)
+            if rules := self.config.get("chat_rules"):
+                self.model._activate()
+                try:
+                    response = await asyncio.to_thread(
+                        self.model.make_request,
+                        parsed_messages,
+                        rules=rules,
+                        api_key=api_key,
+                    )
+                except Exception as e:
+                    debug(f"Error in AI request: {e}")
+                    await self.message.reply(
+                        "Произошла ошибка, ответ не получен. Попробуйте позже."
+                    )
+                    return
+                if response:
+                    await self.model.process_request(response, self.message)
+            else:
+                await self.message.answer(
+                    "Режим модератора не может работать, пока в чате нет правил!"
+                )
+
+
+class TextAnswer(Answer):
+    def __init__(self, message: Message, bot: Bot, cfg: dict):
+        self.message = message
+        self.bot = bot
+        self.config = cfg
+
+    async def answer(self):
+        chat_id = self.message.chat.id
+        if api_key := self.config.get("openrouter_key"):
+            bot_mode = (
+                self.config.get("bot_mode") or "SMART"
+            ).upper()  # Получение режима бота
             if bot_mode == "CUSTOM":
-                custom_prompt = cfg.get("prompt") or DefaultModels.SMART.system_prompt
+                custom_prompt = (
+                    self.config.get("prompt") or DefaultModels.SMART.system_prompt
+                )
                 model_obj = Model(
                     system_prompt=custom_prompt,
                 )
@@ -86,3 +112,40 @@ class AutoAnswer:
             await self.message.reply(
                 "Произошла ошибка, ответ не получен. Попробуйте позже."
             )
+
+
+class AutoAnswer:
+    def __init__(self, message: Message, bot: Bot):
+        self.message = message
+        self.bot = bot
+        self.auto_replies = [
+            self.support,
+            self.ai_answer,
+        ]
+
+    async def get_auto_reply(self):
+        roll = random.random()
+
+        if roll < 0.04:  # 4%
+            await self.support()
+
+        elif roll < 0.06:  # 6% (4% + 2%)
+            await self.support()
+            await self.ai_answer()
+
+        else:  # 94%
+            await self.ai_answer()
+
+    async def support(self):
+        await self.message.answer(ConfigBasePhrases.SUPPORT)
+
+    async def ai_answer(self):
+        chat_id = self.message.chat.id
+        table = Table(Env.DATABASE.table)
+        cfg = await table.select_one({"id": chat_id}) or {}
+        if mode := cfg.get("bot_mode"):
+            if mode.upper() == "MODERATOR":
+                answerer = ModeratorAnswer(self.message, self.bot, cfg)
+            else:
+                answerer = TextAnswer(self.message, self.bot, cfg)
+            await answerer.answer()

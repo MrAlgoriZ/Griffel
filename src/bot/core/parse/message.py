@@ -42,8 +42,12 @@ class MessageParser:
         return result
 
     @staticmethod
-    def dict_to_text(data: dict) -> str:
+    def dict_to_text(data: dict, with_id: bool = False) -> str:
         def format_msg(msg: dict) -> str:
+            if with_id:
+                return (
+                    f"{msg['user']['full_name']} ({msg['user']['id']}): {msg['text']}"
+                )
             return f"{msg['user']['full_name']}: {msg['text']}"
 
         current = format_msg(data)
@@ -54,5 +58,7 @@ class MessageParser:
         return current
 
     @staticmethod
-    def message_to_text(message: Message) -> str:
-        return MessageParser.dict_to_text(MessageParser.message_to_dict(message))
+    def message_to_text(message: Message, with_id: bool = False) -> str:
+        return MessageParser.dict_to_text(
+            MessageParser.message_to_dict(message), with_id=with_id
+        )

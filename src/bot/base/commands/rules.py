@@ -10,11 +10,11 @@ class ChatRulesManager:
     async def get_rules(self, chat_id: int) -> str:
         cfg = await self.table.select_one({"id": chat_id})
         if not cfg:
-            return "Правила чата\n\nПравила не установлены."
+            return "Правила не установлены."
         rules = cfg.get("chat_rules", "")
         if not rules:
-            return "Правила чата\n\nПравила не установлены."
-        return f"Правила чата\n\n{rules}"
+            return "Правила не установлены."
+        return f"--Правила чата--\n\n{rules}"
 
     async def _ensure_admin(self, message: types.Message) -> bool:
         return await is_admin(message, message.bot)

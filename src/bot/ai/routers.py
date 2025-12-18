@@ -55,7 +55,7 @@ async def func_handle_request(message: Message, bot: Bot, command: CommandObject
             )
         else:
             model_obj = getattr(DefaultModels, bot_mode, None)
-            if not model_obj:
+            if not model_obj or model_obj == DefaultModels.MODERATOR:
                 model_obj = DefaultModels.SMART
 
         msg = await message.answer("печатает...")

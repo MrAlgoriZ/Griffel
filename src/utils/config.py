@@ -15,19 +15,19 @@ config = load_config()
 
 @dataclass
 class ConfigSystemPrompts:
-    AGRESSIVE_PROMPT = config.get("system_prompts").get("AGRESSIVE_PROMPT")
-    PETER_PROMPT = config.get("system_prompts").get("PETER_PROMPT")
-    SMART_PROMPT = config.get("system_prompts").get("SMART_PROMPT")
-    MODERATOR_PROMPT = config.get("system_prompts").get("MODERATOR_PROMPT")
-    KAWAII_PROMPT = config.get("system_prompts").get("KAWAII_PROMPT")
+    AGRESSIVE_PROMPT: str | None = config.get("system_prompts").get("AGRESSIVE_PROMPT")
+    PETER_PROMPT: str | None = config.get("system_prompts").get("PETER_PROMPT")
+    SMART_PROMPT: str | None = config.get("system_prompts").get("SMART_PROMPT")
+    MODERATOR_PROMPT: str | None = config.get("system_prompts").get("MODERATOR_PROMPT")
+    KAWAII_PROMPT: str | None = config.get("system_prompts").get("KAWAII_PROMPT")
 
 
 @dataclass
 class ConfigBasePhrases:
-    START = config.get("base_phrases").get("start")
-    HELP = config.get("base_phrases").get("help")
-    SUPPORT = config.get("base_phrases").get("support")
-    AUTHOR = config.get("base_phrases").get("author")
+    START: str | None = config.get("base_phrases").get("start")
+    HELP: str | None = config.get("base_phrases").get("help")
+    SUPPORT: str | None = config.get("base_phrases").get("support")
+    AUTHOR: str | None = config.get("base_phrases").get("author")
 
 
 @dataclass

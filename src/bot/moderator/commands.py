@@ -132,3 +132,64 @@ class ModeratorComands:
                 chat_id=message.chat.id, user_id=reply_message.from_user.id
             )
             await message.answer(f"Пользователь **{mention}** кикнут.")
+
+    @staticmethod
+    async def warn_user(message: Message, bot: Bot):
+        # TODO Сделать варн
+        ...
+
+    @staticmethod
+    async def mute_with_id(chat_id: int, user_id: int, bot: Bot):
+        with suppress(TelegramBadRequest):
+            await bot.restrict_chat_member(
+                chat_id=chat_id,
+                user_id=user_id,
+                permissions=ChatPermissions(
+                    can_send_messages=False,
+                    can_send_media_messages=False,
+                    can_send_other_messages=False,
+                    can_add_web_page_previews=False,
+                ),
+            )
+
+    @staticmethod
+    async def unmute_with_id(chat_id: int, user_id: int, bot: Bot):
+        with suppress(TelegramBadRequest):
+            await bot.restrict_chat_member(
+                chat_id=chat_id,
+                user_id=user_id,
+                permissions=ChatPermissions(
+                    can_send_messages=True,
+                    can_send_media_messages=True,
+                    can_send_other_messages=True,
+                    can_add_web_page_previews=True,
+                ),
+            )
+
+    @staticmethod
+    async def ban_with_id(chat_id: int, user_id: int, bot: Bot):
+        with suppress(TelegramBadRequest):
+            await bot.ban_chat_member(
+                chat_id=chat_id,
+                user_id=user_id,
+            )
+
+    @staticmethod
+    async def unban_with_id(chat_id: int, user_id: int, bot: Bot):
+        with suppress(TelegramBadRequest):
+            await bot.unban_chat_member(
+                chat_id=chat_id,
+                user_id=user_id,
+                only_if_banned=True,
+            )
+
+    @staticmethod
+    async def kick_with_id(chat_id: int, user_id: int, bot: Bot):
+        with suppress(TelegramBadRequest):
+            await bot.ban_chat_member(chat_id=chat_id, user_id=user_id)
+            await bot.unban_chat_member(chat_id=chat_id, user_id=user_id)
+
+    @staticmethod
+    async def warn_with_id(chat_id: int, user_id: int, bot: Bot):
+        # TODO Сделать варн
+        ...

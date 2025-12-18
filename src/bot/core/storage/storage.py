@@ -45,7 +45,9 @@ class RamMessageStorage(MessageStorage):
         async with self.lock:  # Блокировка состояния, чтобы избежать "гонки"
             if message.chat.id not in self.storage:
                 self.storage[message.chat.id] = deque(maxlen=10)
-            self.storage[message.chat.id].append(MessageParser.message_to_text(message))
+            self.storage[message.chat.id].append(
+                MessageParser.message_to_text(message, with_id=True)
+            )
 
     async def add_raw(self, text: str, chat_id: int, bot: Bot):
         async with self.lock:

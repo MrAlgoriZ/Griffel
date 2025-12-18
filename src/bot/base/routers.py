@@ -111,21 +111,24 @@ async def func_config(message: types.Message, bot: Bot):
 async def func_get_author(message: types.Message):
     await message.reply(Config.BASE_PHRASES.AUTHOR)
 
+
 @base_router.message(Command("rules"))
 async def func_get_rules(message: types.Message):
     manager = ChatRulesManager(Table(Env.DATABASE.table))
     rules = await manager.get_rules(message.chat.id)
     await message.reply(rules)
 
+
 @base_router.message(F.text.lower().startswith("+правила"))
 async def func_add_rules(message: types.Message):
-    new_rules = message.text[len("+правила"):].strip()
+    new_rules = message.text[len("+правила") :].strip()
     if not new_rules:
         await message.reply("Пожалуйста, укажите правила после '+правила'")
         return
     manager = ChatRulesManager(Table(Env.DATABASE.table))
     result = await manager.add_rules(message, new_rules)
     await message.reply(result)
+
 
 @base_router.message(F.text.lower().startswith("-правила"))
 async def func_delete_rules(message: types.Message):
@@ -134,17 +137,39 @@ async def func_delete_rules(message: types.Message):
         return
 
     pending_actions[message.chat.id] = {"action": "delete_rules"}
-    await message.reply("Вы уверены, что хотите удалить все правила? Отправьте 'да' для подтверждения или 'нет' для отмены.")
+    await message.reply(
+        "Вы уверены, что хотите удалить все правила? Отправьте 'да' для подтверждения или 'нет' для отмены."
+    )
+
 
 @base_router.message(F.text.lower().startswith("*правила"))
 async def func_edit_rules(message: types.Message):
-    new_rules = message.text[len("*правила"):].strip()
+    new_rules = message.text[len("*правила") :].strip()
     if not new_rules:
         await message.reply("Пожалуйста, укажите новые правила после '*правила'")
         return
     manager = ChatRulesManager(Table(Env.DATABASE.table))
     result = await manager.edit_rules(message, new_rules)
     await message.reply(result)
+
+
+@base_router.message(Command("bot_mode"))
+async def func_change_bot_mode(message: types.Message, bot: Bot):
+    table = Table(Env.DATABASE.table)
+    cfg = await table.select_one({"id": message.chat.id})
+    if not cfg:
+        await message.reply(
+            "Конфигурация не найдена. Введите /config, чтобы инициализировать."
+        )
+        return
+
+    if not await is_admin(message, bot):
+        await message.reply("Только администраторы чата могут изменять режим бота.")
+        return
+
+    kb = keyboards.build_bot_mode_keyboard()
+    await message.reply("Выберите режим бота:", reply_markup=kb)
+
 
 @base_router.callback_query(F.data.startswith("cfg:"))
 async def callback_config(cb: types.CallbackQuery, bot: Bot):
@@ -215,11 +240,6 @@ async def callback_config(cb: types.CallbackQuery, bot: Bot):
 
         case "mode":
             model_name = param.upper() if param else ""
-            if model_name == "MODERATOR":
-                await cb.answer(
-                    "Модераторский режим нельзя установить через эту панель"
-                )
-                return
 
             if model_name == "CUSTOM":
                 default_prompt = [
@@ -295,5 +315,5 @@ async def pending_action_receiver(message: types.Message, bot: Bot):
 @base_router.message()
 async def handle_all_messages(message: types.Message, bot: Bot):
     message_count[message.chat.id] = message_count.get(message.chat.id, 0) + 1
-    if message_count[message.chat.id] % 20 == 0:
+    if message_count[message.chat.id] % 5 == 0:
         await AutoAnswer(message, bot).get_auto_reply()

@@ -78,3 +78,23 @@ def build_config_keyboard(cfg: dict = {}) -> InlineKeyboardMarkup:
     )
 
     return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def build_bot_mode_keyboard() -> InlineKeyboardMarkup:
+    rows = []
+    modes = [m for m in DefaultModels.__dict__ if m.isupper()]
+    mode_buttons = [
+        InlineKeyboardButton(text=m.capitalize(), callback_data=f"cfg:mode:{m}")
+        for m in modes
+    ]
+
+    row = []
+    for i, btn in enumerate(mode_buttons, 1):
+        row.append(btn)
+        if i % 3 == 0:
+            rows.append(row)
+            row = []
+    if row:
+        rows.append(row)
+
+    return InlineKeyboardMarkup(inline_keyboard=rows)
