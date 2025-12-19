@@ -150,6 +150,7 @@ class ModeratorComands:
                     can_send_other_messages=False,
                     can_add_web_page_previews=False,
                 ),
+                until_date=parse_time(),
             )
 
     @staticmethod
@@ -170,8 +171,7 @@ class ModeratorComands:
     async def ban_with_id(chat_id: int, user_id: int, bot: Bot):
         with suppress(TelegramBadRequest):
             await bot.ban_chat_member(
-                chat_id=chat_id,
-                user_id=user_id,
+                chat_id=chat_id, user_id=user_id, until_date=parse_time()
             )
 
     @staticmethod

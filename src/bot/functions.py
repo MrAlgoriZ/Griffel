@@ -14,6 +14,9 @@ async def is_admin(message, bot):
         return False
     return True
 
+async def is_bot_admin(chat_id: int, bot) -> bool:
+    bot_member = await bot.get_chat_member(chat_id, bot.id)
+    return bot_member.status == ChatMemberStatus.ADMINISTRATOR
 
 _TIME_UNITS = {
     "minutes": [
@@ -44,28 +47,22 @@ _TIMEDELTA_KWARGS = {
 }
 
 
-def parse_time(time: Optional[str]) -> Optional[datetime]:
+def parse_time(time: Optional[str] = "1h") -> Optional[datetime]:
     if not time:
         return None
-
     time_match = re.match(r"(\d+)([a-z])", time.lower().strip())
     if not time_match:
         return None
-
     value = int(time_match.group(1))
     unit = time_match.group(2)
-
     time_unit_category = None
     for category, units in _TIME_UNITS.items():
         if unit in units:
             time_unit_category = category
             break
-
     if time_unit_category is None:
         return None
-
     timedelta_kwargs = _TIMEDELTA_KWARGS[time_unit_category](value)
     time_delta = timedelta(**timedelta_kwargs)
     future_datetime = datetime.now() + time_delta
-
     return future_datetime
