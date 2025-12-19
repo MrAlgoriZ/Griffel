@@ -9,8 +9,8 @@
 
     "base_phrases": {
         "start": "Привет! Я Гриффель, твой бот-модератор и нейросеть. Подробнее - /help",
-        "help": "Мануал: https://...\nПолитика конфиденциальности: https://...\nПолитика использования: https://...",
-        "support": "Поддержать проект: ...",
-        "author": "Соцсети автора: ..."
+        "help": "Мануал: https://...\nПолитика конфиденциальности: https://...\nПолитика использования: https://...\nИсходный код: https://github.com/MrAlgoriZ/Griffel",
+        "support": "Добровольная поддержка автора и проекта: \n  Рубли: https://dalink.to/mralgoriz\nКриптовалюта (опционально):\n  Tether (TON): `UQAWRPXaAXO4tov7Co0m_hVPJmHVfu1mZp9_G33vLhJ-kS4V`\n  BTC (BSC): `0xba52a8b40085ebdc889a2c3bd9a7ac55d51d23f6`",
+        "author": "Соцсети автора: \n  Github: https://github.com/MrAlgoriZ\n  Twitch: https://www.twitch.tv/tulymics"
     }
 }

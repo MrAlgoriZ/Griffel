@@ -111,6 +111,9 @@ async def func_config(message: types.Message, bot: Bot):
 async def func_get_author(message: types.Message):
     await message.reply(Config.BASE_PHRASES.AUTHOR)
 
+@base_router.message(Command("support"))
+async def func_get_support(message: types.Message):
+    await message.reply(Config.BASE_PHRASES.SUPPORT)
 
 @base_router.message(Command("rules"))
 async def func_get_rules(message: types.Message):
